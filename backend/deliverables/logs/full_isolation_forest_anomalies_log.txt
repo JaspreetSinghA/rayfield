@@ -1,0 +1,497 @@
+NOTE: Only the first 10000 rows were processed for anomaly detection due to performance limits.
+Anomaly detected — Facility: ABERDEEN ENERGY LLC | Year: 2022 | CO2: 191850.2
+Anomaly detected — Facility: ABERDEEN ENERGY LLC | Year: 2021 | CO2: 190690.9
+Anomaly detected — Facility: ABERDEEN ENERGY LLC | Year: 2020 | CO2: 196750.0
+Anomaly detected — Facility: ABERDEEN ENERGY LLC | Year: 2019 | CO2: 193170.4
+Anomaly detected — Facility: ABERDEEN ENERGY LLC | Year: 2018 | CO2: 194154.4
+Anomaly detected — Facility: ABSOLUTE ENERGY LLC | Year: 2014 | CO2: 178708.2
+Anomaly detected — Facility: AC 857 A | Year: 2022 | CO2: 192278.8
+Anomaly detected — Facility: AC 857 A | Year: 2021 | CO2: 221761.0
+Anomaly detected — Facility: AC 857 A | Year: 2019 | CO2: 202022.8
+Anomaly detected — Facility: AC 857 A | Year: 2018 | CO2: 200083.5
+Anomaly detected — Facility: AC 857 A | Year: 2017 | CO2: 196231.2
+Anomaly detected — Facility: AC 857 A | Year: 2016 | CO2: 220226.2
+Anomaly detected — Facility: AC 857 A | Year: 2015 | CO2: 230586.0
+Anomaly detected — Facility: ADM CORN PROCESSING | Year: 2022 | CO2: 424439.8
+Anomaly detected — Facility: ADM CORN PROCESSING | Year: 2022 | CO2: 211752.8
+Anomaly detected — Facility: ADM CORN PROCESSING | Year: 2021 | CO2: 200546.4
+Anomaly detected — Facility: ADM CORN PROCESSING | Year: 2017 | CO2: 494982.2
+Anomaly detected — Facility: ADM CORN PROCESSING | Year: 2016 | CO2: 378749.1
+Anomaly detected — Facility: ADM CORN PROCESSING | Year: 2015 | CO2: 356894.5
+Anomaly detected — Facility: ADM CORN PROCESSING | Year: 2011 | CO2: 337560.0
+Anomaly detected — Facility: ADVANSIX INCORPORATED - HOPEWELL | Year: 2022 | CO2: 340709.6
+Anomaly detected — Facility: ADVANSIX INCORPORATED - HOPEWELL | Year: 2021 | CO2: 351697.6
+Anomaly detected — Facility: ADVANSIX INCORPORATED - HOPEWELL | Year: 2020 | CO2: 350650.0
+Anomaly detected — Facility: ADVANSIX INCORPORATED - HOPEWELL | Year: 2019 | CO2: 383849.2
+Anomaly detected — Facility: ADVANSIX INCORPORATED - HOPEWELL | Year: 2018 | CO2: 344818.1
+Anomaly detected — Facility: ADVANSIX INCORPORATED - HOPEWELL | Year: 2017 | CO2: 374748.2
+Anomaly detected — Facility: ADVANSIX INCORPORATED - HOPEWELL | Year: 2016 | CO2: 327115.0
+Anomaly detected — Facility: ADVANSIX INCORPORATED - HOPEWELL | Year: 2015 | CO2: 340468.3
+Anomaly detected — Facility: ADVANSIX INCORPORATED - HOPEWELL | Year: 2014 | CO2: 362563.7
+Anomaly detected — Facility: ADVANSIX INCORPORATED - HOPEWELL | Year: 2013 | CO2: 436635.0
+Anomaly detected — Facility: ADVANSIX INCORPORATED - HOPEWELL | Year: 2012 | CO2: 461664.0
+Anomaly detected — Facility: ADVANSIX INCORPORATED - HOPEWELL | Year: 2011 | CO2: 328499.0
+Anomaly detected — Facility: Aera Energy Alberta Finley Shale | Year: 2015 | CO2: 193887.0
+Anomaly detected — Facility: Aera Energy Alberta Finley Shale | Year: 2012 | CO2: 191892.0
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2022 | CO2: 270929.5
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2022 | CO2: 286055.9
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2022 | CO2: 323173.0
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2022 | CO2: 272592.7
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2021 | CO2: 276738.4
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2021 | CO2: 308264.7
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2021 | CO2: 327567.1
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2021 | CO2: 301016.3
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2020 | CO2: 263022.4
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2020 | CO2: 310996.7
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2020 | CO2: 335376.1
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2020 | CO2: 195013.9
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2019 | CO2: 247511.3
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2019 | CO2: 220861.4
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2019 | CO2: 321185.2
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2019 | CO2: 386093.1
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2018 | CO2: 254335.9
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2018 | CO2: 295505.2
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2018 | CO2: 328665.5
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2018 | CO2: 429560.9
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2017 | CO2: 261191.1
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2017 | CO2: 299782.7
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2017 | CO2: 317785.5
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2017 | CO2: 468104.5
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2016 | CO2: 243285.9
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2016 | CO2: 492806.0
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2016 | CO2: 816558.8
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2015 | CO2: 209733.0
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2015 | CO2: 495617.2
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2015 | CO2: 785402.6
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2014 | CO2: 203451.1
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2014 | CO2: 264723.9
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2014 | CO2: 510092.1
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2014 | CO2: 419194.1
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2013 | CO2: 235187.8
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2013 | CO2: 590673.3
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2013 | CO2: 468570.7
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2012 | CO2: 342136.0
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2012 | CO2: 338713.4
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2012 | CO2: 379153.5
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2011 | CO2: 841406.0
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2011 | CO2: 225399.3
+Anomaly detected — Facility: Aera Energy Belridge | Year: 2011 | CO2: 230851.6
+Anomaly detected — Facility: Aera Energy Coalinga | Year: 2015 | CO2: 196961.8
+Anomaly detected — Facility: Aera Energy Coalinga | Year: 2014 | CO2: 199616.4
+Anomaly detected — Facility: Aera Energy Coalinga | Year: 2013 | CO2: 247021.9
+Anomaly detected — Facility: Aera Energy Coalinga | Year: 2012 | CO2: 222862.5
+Anomaly detected — Facility: Aera Energy Coalinga | Year: 2011 | CO2: 222256.1
+Anomaly detected — Facility: Aera Energy MOCO | Year: 2013 | CO2: 375224.1
+Anomaly detected — Facility: Aera Energy MOCO | Year: 2012 | CO2: 401158.8
+Anomaly detected — Facility: Aera Energy MOCO | Year: 2011 | CO2: 423918.1
+Anomaly detected — Facility: Aera Energy San Ardo | Year: 2019 | CO2: 267237.1
+Anomaly detected — Facility: Aera Energy San Ardo | Year: 2018 | CO2: 281209.7
+Anomaly detected — Facility: Aera Energy San Ardo | Year: 2017 | CO2: 286273.2
+Anomaly detected — Facility: AGRIUM US BORGER NITROGEN OPERATIONS | Year: 2022 | CO2: 410708.6
+Anomaly detected — Facility: AGRIUM US BORGER NITROGEN OPERATIONS | Year: 2021 | CO2: 297794.7
+Anomaly detected — Facility: AGRIUM US BORGER NITROGEN OPERATIONS | Year: 2020 | CO2: 341646.1
+Anomaly detected — Facility: AGRIUM US BORGER NITROGEN OPERATIONS | Year: 2019 | CO2: 315705.8
+Anomaly detected — Facility: AGRIUM US BORGER NITROGEN OPERATIONS | Year: 2018 | CO2: 375693.4
+Anomaly detected — Facility: AGRIUM US BORGER NITROGEN OPERATIONS | Year: 2017 | CO2: 367900.5
+Anomaly detected — Facility: AGRIUM US BORGER NITROGEN OPERATIONS | Year: 2016 | CO2: 420335.9
+Anomaly detected — Facility: AGRIUM US BORGER NITROGEN OPERATIONS | Year: 2015 | CO2: 365523.0
+Anomaly detected — Facility: AGRIUM US BORGER NITROGEN OPERATIONS | Year: 2014 | CO2: 400050.0
+Anomaly detected — Facility: AGRIUM US BORGER NITROGEN OPERATIONS | Year: 2013 | CO2: 399253.0
+Anomaly detected — Facility: AGRIUM US BORGER NITROGEN OPERATIONS | Year: 2012 | CO2: 418265.0
+Anomaly detected — Facility: AGRIUM US BORGER NITROGEN OPERATIONS | Year: 2011 | CO2: 412644.0
+Anomaly detected — Facility: AIR LIQUIDE - PORT NECHES ASU COGENERATION PLANT | Year: 2019 | CO2: 216218.4
+Anomaly detected — Facility: AIR LIQUIDE - PORT NECHES ASU COGENERATION PLANT | Year: 2016 | CO2: 205359.5
+Anomaly detected — Facility: AIR LIQUIDE - PORT NECHES ASU COGENERATION PLANT | Year: 2015 | CO2: 210756.5
+Anomaly detected — Facility: AIR LIQUIDE - PORT NECHES ASU COGENERATION PLANT | Year: 2013 | CO2: 204949.2
+Anomaly detected — Facility: AIR LIQUIDE - PORT NECHES ASU COGENERATION PLANT | Year: 2012 | CO2: 205215.1
+Anomaly detected — Facility: AIR LIQUIDE - PORT NECHES ASU COGENERATION PLANT | Year: 2011 | CO2: 206933.6
+Anomaly detected — Facility: AIR LIQUIDE AMERICA CORP. | Year: 2022 | CO2: 380575.9
+Anomaly detected — Facility: AIR LIQUIDE AMERICA CORP. | Year: 2021 | CO2: 301278.3
+Anomaly detected — Facility: AIR LIQUIDE AMERICA CORP. | Year: 2020 | CO2: 308461.1
+Anomaly detected — Facility: AIR LIQUIDE AMERICA CORP. | Year: 2019 | CO2: 308651.1
+Anomaly detected — Facility: AIR LIQUIDE AMERICA CORP. | Year: 2018 | CO2: 350893.6
+Anomaly detected — Facility: AIR LIQUIDE AMERICA CORP. | Year: 2017 | CO2: 301618.2
+Anomaly detected — Facility: AIR LIQUIDE AMERICA CORP. | Year: 2016 | CO2: 395116.0
+Anomaly detected — Facility: AIR LIQUIDE AMERICA CORP. | Year: 2015 | CO2: 406960.1
+Anomaly detected — Facility: AIR LIQUIDE AMERICA CORP. | Year: 2013 | CO2: 409922.1
+Anomaly detected — Facility: AIR LIQUIDE AMERICA CORP. | Year: 2012 | CO2: 411052.9
+Anomaly detected — Facility: AIR LIQUIDE AMERICA CORP. | Year: 2011 | CO2: 338746.8
+Anomaly detected — Facility: AIR LIQUIDE GEISMAR UTILITY SERVICES | Year: 2021 | CO2: 214240.7
+Anomaly detected — Facility: AIR LIQUIDE GEISMAR UTILITY SERVICES | Year: 2014 | CO2: 200265.4
+Anomaly detected — Facility: Air Products Port Arthur Facility | Year: 2022 | CO2: 317326.1
+Anomaly detected — Facility: Air Products Port Arthur Facility | Year: 2021 | CO2: 371441.6
+Anomaly detected — Facility: Air Products Port Arthur Facility | Year: 2020 | CO2: 389183.9
+Anomaly detected — Facility: Air Products Port Arthur Facility | Year: 2019 | CO2: 244524.9
+Anomaly detected — Facility: Air Products Port Arthur Facility | Year: 2018 | CO2: 197160.4
+Anomaly detected — Facility: Air Products Port Arthur Facility | Year: 2018 | CO2: 370976.4
+Anomaly detected — Facility: Air Products Port Arthur Facility | Year: 2017 | CO2: 327581.6
+Anomaly detected — Facility: Air Products Port Arthur Facility | Year: 2016 | CO2: 202179.4
+Anomaly detected — Facility: Air Products Port Arthur Facility | Year: 2015 | CO2: 334574.1
+Anomaly detected — Facility: Air Products Port Arthur Facility | Year: 2014 | CO2: 206630.8
+Anomaly detected — Facility: Air Products Port Arthur Facility | Year: 2014 | CO2: 248459.4
+Anomaly detected — Facility: Air Products Port Arthur Facility | Year: 2013 | CO2: 368239.0
+Anomaly detected — Facility: Air Products Port Arthur Facility | Year: 2012 | CO2: 348187.0
+Anomaly detected — Facility: Air Products Port Arthur Facility | Year: 2011 | CO2: 333294.0
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2020 | CO2: 1428074.4
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2020 | CO2: 233097.0
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2020 | CO2: 189606.0
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2020 | CO2: 216715.0
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2020 | CO2: 236756.0
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2019 | CO2: 1519319.3
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2019 | CO2: 252670.5
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2019 | CO2: 202688.5
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2019 | CO2: 243871.1
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2019 | CO2: 249520.4
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2018 | CO2: 1551038.0
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2018 | CO2: 244603.6
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2018 | CO2: 205057.5
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2018 | CO2: 207543.0
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2018 | CO2: 241405.0
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2018 | CO2: 268060.0
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2017 | CO2: 1531706.5
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2017 | CO2: 251823.9
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2017 | CO2: 218688.4
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2017 | CO2: 238313.6
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2017 | CO2: 247065.7
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2016 | CO2: 1478322.8
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2016 | CO2: 269797.7
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2016 | CO2: 253974.6
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2016 | CO2: 253345.2
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2016 | CO2: 275303.6
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2015 | CO2: 1575273.6
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2015 | CO2: 207468.6
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2015 | CO2: 229988.0
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2015 | CO2: 246517.9
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2014 | CO2: 1622712.8
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2014 | CO2: 210902.9
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2014 | CO2: 202638.6
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2014 | CO2: 203898.1
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2014 | CO2: 213768.0
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2014 | CO2: 200325.3
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2014 | CO2: 237978.9
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2013 | CO2: 1414035.5
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2013 | CO2: 196997.4
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2013 | CO2: 193039.8
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2013 | CO2: 237092.7
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2012 | CO2: 1549519.8
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2012 | CO2: 209705.7
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2012 | CO2: 229277.0
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2012 | CO2: 239499.9
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2012 | CO2: 245777.5
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2011 | CO2: 1454810.1
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2011 | CO2: 199532.0
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2011 | CO2: 196377.7
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2011 | CO2: 229986.4
+Anomaly detected — Facility: AK Steel Corporation - Middletown | Year: 2011 | CO2: 213348.7
+Anomaly detected — Facility: AK Steel Corporation West Works | Year: 2015 | CO2: 343000.8
+Anomaly detected — Facility: AK Steel Corporation West Works | Year: 2015 | CO2: 336405.8
+Anomaly detected — Facility: AK Steel Corporation West Works | Year: 2015 | CO2: 317699.4
+Anomaly detected — Facility: AK Steel Corporation West Works | Year: 2014 | CO2: 400240.8
+Anomaly detected — Facility: AK Steel Corporation West Works | Year: 2014 | CO2: 247646.4
+Anomaly detected — Facility: AK Steel Corporation West Works | Year: 2014 | CO2: 249473.8
+Anomaly detected — Facility: AK Steel Corporation West Works | Year: 2013 | CO2: 615782.5
+Anomaly detected — Facility: AK Steel Corporation West Works | Year: 2013 | CO2: 272970.7
+Anomaly detected — Facility: AK Steel Corporation West Works | Year: 2013 | CO2: 270705.6
+Anomaly detected — Facility: AK Steel Corporation West Works | Year: 2012 | CO2: 665258.8
+Anomaly detected — Facility: AK Steel Corporation West Works | Year: 2012 | CO2: 212398.2
+Anomaly detected — Facility: AK Steel Corporation West Works | Year: 2012 | CO2: 304107.0
+Anomaly detected — Facility: AK Steel Corporation West Works | Year: 2012 | CO2: 257377.6
+Anomaly detected — Facility: AK Steel Corporation West Works | Year: 2011 | CO2: 719884.9
+Anomaly detected — Facility: AK Steel Corporation West Works | Year: 2011 | CO2: 202898.6
+Anomaly detected — Facility: AK Steel Corporation West Works | Year: 2011 | CO2: 234088.7
+Anomaly detected — Facility: AK Steel Corporation West Works | Year: 2011 | CO2: 239779.2
+Anomaly detected — Facility: AK Steel Corporation West Works | Year: 2011 | CO2: 243249.8
+Anomaly detected — Facility: AK STEEL DEARBORN WORKS | Year: 2019 | CO2: 568045.6
+Anomaly detected — Facility: AK STEEL DEARBORN WORKS | Year: 2019 | CO2: 289490.7
+Anomaly detected — Facility: AK STEEL DEARBORN WORKS | Year: 2018 | CO2: 714375.0
+Anomaly detected — Facility: AK STEEL DEARBORN WORKS | Year: 2018 | CO2: 302083.3
+Anomaly detected — Facility: AK STEEL DEARBORN WORKS | Year: 2017 | CO2: 226408.7
+Anomaly detected — Facility: AK STEEL DEARBORN WORKS | Year: 2016 | CO2: 237870.2
+Anomaly detected — Facility: AK STEEL DEARBORN WORKS | Year: 2015 | CO2: 306463.6
+Anomaly detected — Facility: AK STEEL DEARBORN WORKS | Year: 2014 | CO2: 353915.2
+Anomaly detected — Facility: AK STEEL DEARBORN WORKS | Year: 2013 | CO2: 359072.0
+Anomaly detected — Facility: AK STEEL DEARBORN WORKS | Year: 2012 | CO2: 341802.0
+Anomaly detected — Facility: AK STEEL DEARBORN WORKS | Year: 2011 | CO2: 327438.2
+Anomaly detected — Facility: AL CORN CLEAN FUEL | Year: 2022 | CO2: 202950.8
+Anomaly detected — Facility: ALCOA INC - WARRICK OPERATIONS | Year: 2021 | CO2: 198403.3
+Anomaly detected — Facility: ALCOA INC - WARRICK OPERATIONS | Year: 2020 | CO2: 191350.6
+Anomaly detected — Facility: ALCOA INC - WARRICK OPERATIONS | Year: 2018 | CO2: 198422.9
+Anomaly detected — Facility: ALCOA INC - WARRICK OPERATIONS | Year: 2017 | CO2: 211424.1
+Anomaly detected — Facility: ALCOA INC - WARRICK OPERATIONS | Year: 2016 | CO2: 203815.5
+Anomaly detected — Facility: ALCOA WORLD ALUMINA ATLANTIC | Year: 2015 | CO2: 937885.2
+Anomaly detected — Facility: ALCOA WORLD ALUMINA ATLANTIC | Year: 2014 | CO2: 905782.6
+Anomaly detected — Facility: ALCOA WORLD ALUMINA ATLANTIC | Year: 2013 | CO2: 893531.9
+Anomaly detected — Facility: ALCOA WORLD ALUMINA ATLANTIC | Year: 2012 | CO2: 815158.4
+Anomaly detected — Facility: ALCOA WORLD ALUMINA ATLANTIC | Year: 2011 | CO2: 798040.7
+Anomaly detected — Facility: AM/NS Calvert, LLC | Year: 2017 | CO2: 519456.7
+Anomaly detected — Facility: AM/NS Calvert, LLC | Year: 2016 | CO2: 487621.7
+Anomaly detected — Facility: AM/NS Calvert, LLC | Year: 2015 | CO2: 446775.7
+Anomaly detected — Facility: AM/NS Calvert, LLC | Year: 2014 | CO2: 440834.3
+Anomaly detected — Facility: AM/NS Calvert, LLC | Year: 2013 | CO2: 341296.0
+Anomaly detected — Facility: AM/NS Calvert, LLC | Year: 2012 | CO2: 285772.0
+Anomaly detected — Facility: AM/NS Calvert, LLC | Year: 2011 | CO2: 244317.4
+Anomaly detected — Facility: AMALGAMATED SUGAR CO LLC | Year: 2022 | CO2: 190251.6
+Anomaly detected — Facility: AMALGAMATED SUGAR CO LLC | Year: 2020 | CO2: 190098.6
+Anomaly detected — Facility: AMALGAMATED SUGAR CO LLC | Year: 2017 | CO2: 197740.6
+Anomaly detected — Facility: AMALGAMATED SUGAR CO LLC | Year: 2017 | CO2: 194937.4
+Anomaly detected — Facility: AMALGAMATED SUGAR CO LLC | Year: 2016 | CO2: 194379.5
+Anomaly detected — Facility: AMALGAMATED SUGAR CO LLC | Year: 2013 | CO2: 215402.0
+Anomaly detected — Facility: American Crystal Sugar Company - Drayton | Year: 2022 | CO2: 232676.6
+Anomaly detected — Facility: American Crystal Sugar Company - Drayton | Year: 2021 | CO2: 202823.6
+Anomaly detected — Facility: American Crystal Sugar Company - Drayton | Year: 2019 | CO2: 213737.1
+Anomaly detected — Facility: American Crystal Sugar Company - Drayton | Year: 2018 | CO2: 220102.6
+Anomaly detected — Facility: American Crystal Sugar Company - Drayton | Year: 2017 | CO2: 216141.7
+Anomaly detected — Facility: American Crystal Sugar Company - Drayton | Year: 2016 | CO2: 194096.6
+Anomaly detected — Facility: American Crystal Sugar Company - Drayton | Year: 2012 | CO2: 191106.1
+Anomaly detected — Facility: American Soda LLC | Year: 2022 | CO2: 335427.2
+Anomaly detected — Facility: AMERICAN SUGAR REFINING INC - Chalmette Refinery | Year: 2018 | CO2: 249238.8
+Anomaly detected — Facility: AMERICAN SYNTHETIC RUBBER | Year: 2018 | CO2: 192847.0
+Anomaly detected — Facility: AMERICAN SYNTHETIC RUBBER | Year: 2016 | CO2: 195442.3
+Anomaly detected — Facility: AMERICAN SYNTHETIC RUBBER | Year: 2015 | CO2: 216663.7
+Anomaly detected — Facility: AMERICAN SYNTHETIC RUBBER | Year: 2014 | CO2: 195600.1
+Anomaly detected — Facility: AMERICAN SYNTHETIC RUBBER | Year: 2013 | CO2: 196868.0
+Anomaly detected — Facility: AMERICAN SYNTHETIC RUBBER | Year: 2012 | CO2: 209656.3
+Anomaly detected — Facility: AMERICAN SYNTHETIC RUBBER | Year: 2011 | CO2: 240591.1
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2022 | CO2: 332367.7
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2022 | CO2: 263221.1
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2021 | CO2: 465220.6
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2021 | CO2: 266716.6
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2020 | CO2: 401937.6
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2020 | CO2: 266545.7
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2019 | CO2: 435518.1
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2019 | CO2: 271905.6
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2018 | CO2: 418576.0
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2018 | CO2: 300960.6
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2017 | CO2: 331424.6
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2017 | CO2: 290347.1
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2016 | CO2: 427159.4
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2016 | CO2: 256008.1
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2015 | CO2: 429744.2
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2015 | CO2: 235365.1
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2014 | CO2: 380568.3
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2014 | CO2: 236551.4
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2013 | CO2: 434763.5
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2013 | CO2: 275709.2
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2012 | CO2: 422742.7
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2012 | CO2: 279836.2
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2011 | CO2: 372051.4
+Anomaly detected — Facility: AMERICAS STYRENICS LLC - ST JAMES PLANT | Year: 2011 | CO2: 250548.5
+Anomaly detected — Facility: Anadarko | Year: 2018 | CO2: 203237.3
+Anomaly detected — Facility: Andeavor EL PASO ALL SITES | Year: 2018 | CO2: 265966.7
+Anomaly detected — Facility: Andeavor EL PASO ALL SITES | Year: 2018 | CO2: 251145.8
+Anomaly detected — Facility: Andeavor EL PASO ALL SITES | Year: 2017 | CO2: 206099.9
+Anomaly detected — Facility: Andeavor EL PASO ALL SITES | Year: 2017 | CO2: 273293.5
+Anomaly detected — Facility: ANDERSONS ALBION ETHANOL LLC | Year: 2018 | CO2: 221845.0
+Anomaly detected — Facility: Anheuser-Busch LLC. - St. Louis Brewery | Year: 2014 | CO2: 198091.1
+Anomaly detected — Facility: Anheuser-Busch LLC. - St. Louis Brewery | Year: 2013 | CO2: 212113.0
+Anomaly detected — Facility: Anheuser-Busch LLC. - St. Louis Brewery | Year: 2012 | CO2: 253383.3
+Anomaly detected — Facility: Anheuser-Busch LLC. - St. Louis Brewery | Year: 2011 | CO2: 284121.3
+Anomaly detected — Facility: Applied Energy LLC Naval Station | Year: 2017 | CO2: 197290.9
+Anomaly detected — Facility: Applied Energy LLC Naval Station | Year: 2016 | CO2: 195717.0
+Anomaly detected — Facility: Applied Energy LLC Naval Station | Year: 2015 | CO2: 191006.2
+Anomaly detected — Facility: Applied Energy LLC Naval Station | Year: 2013 | CO2: 191874.6
+Anomaly detected — Facility: APS West Phoenix Power Plant | Year: 2020 | CO2: 190972.3
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2019 | CO2: 270031.5
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2019 | CO2: 832762.6
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2019 | CO2: 386364.4
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2019 | CO2: 211799.8
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2019 | CO2: 702019.5
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2019 | CO2: 688226.3
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2019 | CO2: 327558.9
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2019 | CO2: 433974.8
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2019 | CO2: 215850.0
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2018 | CO2: 269864.7
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2018 | CO2: 818344.7
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2018 | CO2: 390952.8
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2018 | CO2: 215109.5
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2018 | CO2: 698605.6
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2018 | CO2: 728779.7
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2018 | CO2: 418845.0
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2017 | CO2: 235632.9
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2017 | CO2: 766541.3
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2017 | CO2: 374739.4
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2017 | CO2: 208862.5
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2017 | CO2: 666819.3
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2017 | CO2: 638989.4
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2017 | CO2: 317114.3
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2017 | CO2: 250043.9
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2017 | CO2: 211971.4
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2017 | CO2: 214687.5
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2017 | CO2: 325697.3
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2016 | CO2: 746721.1
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2016 | CO2: 2806495.6
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2016 | CO2: 419896.0
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2016 | CO2: 676148.2
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2016 | CO2: 586106.8
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2015 | CO2: 728158.3
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2015 | CO2: 3332911.2
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2015 | CO2: 453976.5
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2015 | CO2: 743855.6
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2015 | CO2: 615439.0
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2014 | CO2: 731587.8
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2014 | CO2: 2870224.3
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2014 | CO2: 406321.3
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2014 | CO2: 674830.2
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2014 | CO2: 561899.1
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2013 | CO2: 648564.9
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2013 | CO2: 2641533.0
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2013 | CO2: 438716.7
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2013 | CO2: 460033.2
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2013 | CO2: 505062.1
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2012 | CO2: 269703.5
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2012 | CO2: 598904.4
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2012 | CO2: 2737174.3
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2012 | CO2: 490922.5
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2012 | CO2: 606819.8
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2012 | CO2: 657682.9
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2011 | CO2: 433660.7
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2011 | CO2: 572766.1
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2011 | CO2: 3031785.0
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2011 | CO2: 466261.3
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2011 | CO2: 821873.0
+Anomaly detected — Facility: ARCELORMITTAL BURNS HARBOR LLC | Year: 2011 | CO2: 757287.0
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2019 | CO2: 538626.0
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2019 | CO2: 682971.8
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2019 | CO2: 640197.0
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2019 | CO2: 424337.8
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2019 | CO2: 300646.4
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2019 | CO2: 196966.5
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2019 | CO2: 370986.0
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2018 | CO2: 559318.1
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2018 | CO2: 636405.3
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2018 | CO2: 656210.4
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2018 | CO2: 384049.7
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2018 | CO2: 342713.4
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2018 | CO2: 579647.2
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2017 | CO2: 548703.4
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2017 | CO2: 688754.1
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2017 | CO2: 661748.5
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2017 | CO2: 208109.3
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2017 | CO2: 214634.5
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2017 | CO2: 394323.8
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2017 | CO2: 212466.0
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2017 | CO2: 596770.1
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2016 | CO2: 537938.2
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2016 | CO2: 713487.2
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2016 | CO2: 672670.4
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2016 | CO2: 209611.6
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2016 | CO2: 200509.1
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2016 | CO2: 367752.3
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2016 | CO2: 480116.6
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2016 | CO2: 325055.3
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2016 | CO2: 249232.6
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2015 | CO2: 507073.8
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2015 | CO2: 633380.8
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2015 | CO2: 707701.8
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2015 | CO2: 223502.8
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2015 | CO2: 379052.0
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2015 | CO2: 555928.4
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2015 | CO2: 489966.4
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2014 | CO2: 499989.7
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2014 | CO2: 665082.3
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2014 | CO2: 677677.6
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2014 | CO2: 245912.1
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2014 | CO2: 206960.0
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2014 | CO2: 432136.0
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2014 | CO2: 370913.7
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2014 | CO2: 608891.0
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2013 | CO2: 479409.0
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2013 | CO2: 705171.6
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2013 | CO2: 493468.7
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2013 | CO2: 206472.5
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2013 | CO2: 305370.8
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2013 | CO2: 413691.8
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2013 | CO2: 330686.9
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2013 | CO2: 466045.9
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2012 | CO2: 454007.0
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2012 | CO2: 693826.3
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2012 | CO2: 589375.1
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2012 | CO2: 226111.9
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2012 | CO2: 350826.9
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2012 | CO2: 446749.0
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2012 | CO2: 604838.7
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2011 | CO2: 422526.3
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2011 | CO2: 612098.0
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2011 | CO2: 661266.6
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2011 | CO2: 211091.9
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2011 | CO2: 293549.9
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2011 | CO2: 322991.4
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2011 | CO2: 210400.0
+Anomaly detected — Facility: ArcelorMittal Cleveland LLC | Year: 2011 | CO2: 501673.8
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2019 | CO2: 304999.1
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2019 | CO2: 303707.0
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2019 | CO2: 693320.9
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2019 | CO2: 195452.5
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2019 | CO2: 463061.7
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2019 | CO2: 1054454.3
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2018 | CO2: 300112.3
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2018 | CO2: 371612.2
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2018 | CO2: 453769.8
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2018 | CO2: 358724.1
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2018 | CO2: 389470.2
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2018 | CO2: 781098.1
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2017 | CO2: 314180.8
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2017 | CO2: 483803.1
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2017 | CO2: 599814.2
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2017 | CO2: 312741.2
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2017 | CO2: 553998.1
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2017 | CO2: 907735.6
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2016 | CO2: 309573.4
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2016 | CO2: 677361.3
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2016 | CO2: 725273.3
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2016 | CO2: 1499200.7
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2015 | CO2: 456047.8
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2015 | CO2: 586593.3
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2015 | CO2: 365442.8
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2015 | CO2: 863183.6
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2014 | CO2: 498524.7
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2014 | CO2: 467237.6
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2014 | CO2: 792820.1
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2014 | CO2: 666331.8
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2014 | CO2: 1347705.6
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2013 | CO2: 484927.0
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2013 | CO2: 415348.0
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2013 | CO2: 854161.0
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2013 | CO2: 610880.0
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2013 | CO2: 1268621.0
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2012 | CO2: 514266.0
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2012 | CO2: 527110.5
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2012 | CO2: 712548.0
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2012 | CO2: 493460.0
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2012 | CO2: 1234369.0
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2011 | CO2: 486967.0
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2011 | CO2: 321883.0
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2011 | CO2: 593738.4
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2011 | CO2: 511857.0
+Anomaly detected — Facility: ArcelorMittal Indiana Harbor LLC | Year: 2011 | CO2: 1024528.0
+Anomaly detected — Facility: Archer Daniels Midland Co. | Year: 2021 | CO2: 392549.5
+Anomaly detected — Facility: Archer Daniels Midland Co. | Year: 2020 | CO2: 409836.0
+Anomaly detected — Facility: Archer Daniels Midland Co. | Year: 2019 | CO2: 361885.8
+Anomaly detected — Facility: Archer Daniels Midland Co. | Year: 2018 | CO2: 355578.6
+Anomaly detected — Facility: Archer Daniels Midland Co. | Year: 2017 | CO2: 352835.3
+Anomaly detected — Facility: Archer Daniels Midland Co. | Year: 2016 | CO2: 358603.2
+Anomaly detected — Facility: Archer Daniels Midland Co. | Year: 2015 | CO2: 353096.3
+Anomaly detected — Facility: Archer Daniels Midland Co. | Year: 2014 | CO2: 382240.8
+Anomaly detected — Facility: Archer Daniels Midland Co. | Year: 2013 | CO2: 410031.0
+Anomaly detected — Facility: Archer Daniels Midland Co. | Year: 2012 | CO2: 445253.8
+Anomaly detected — Facility: Archer Daniels Midland Co. | Year: 2011 | CO2: 328940.6
+Anomaly detected — Facility: Archer Daniels Midland Co. - Peoria | Year: 2019 | CO2: 504572.3
+Anomaly detected — Facility: Archer Daniels Midland Co. - Peoria | Year: 2018 | CO2: 495815.9
+Anomaly detected — Facility: Archer Daniels Midland Co. - Peoria | Year: 2017 | CO2: 567441.1
+Anomaly detected — Facility: Archer Daniels Midland Co. - Peoria | Year: 2016 | CO2: 607614.3
+Anomaly detected — Facility: Archer Daniels Midland Co. - Peoria | Year: 2015 | CO2: 653582.0
+Anomaly detected — Facility: Archer Daniels Midland Co. - Peoria | Year: 2014 | CO2: 702776.1
+Anomaly detected — Facility: Archer Daniels Midland Co. - Peoria | Year: 2013 | CO2: 692508.0
+Anomaly detected — Facility: Archer Daniels Midland Co. - Peoria | Year: 2012 | CO2: 624988.0
+Anomaly detected — Facility: Archer Daniels Midland Co. - Peoria | Year: 2011 | CO2: 648565.0
+Anomaly detected — Facility: ARCONIC INC - TENNESSEE OPERATIONS | Year: 2017 | CO2: 216748.9
+Anomaly detected — Facility: ARCONIC INC - TENNESSEE OPERATIONS | Year: 2016 | CO2: 226342.7
+Anomaly detected — Facility: ARCONIC INC - TENNESSEE OPERATIONS | Year: 2015 | CO2: 208357.0
+Anomaly detected — Facility: ARCONIC INC - TENNESSEE OPERATIONS | Year: 2013 | CO2: 196881.0
+Anomaly detected — Facility: ARCONIC INC - TENNESSEE OPERATIONS | Year: 2012 | CO2: 193472.0
+Anomaly detected — Facility: ARCONIC INC - TENNESSEE OPERATIONS | Year: 2011 | CO2: 191408.0
+Anomaly detected — Facility: ARCONIC TENNESSEE OPERATIONS | Year: 2021 | CO2: 203575.7
+Anomaly detected — Facility: ARKANSAS LIME COMPANY | Year: 2019 | CO2: 236032.0
+Anomaly detected — Facility: ARKANSAS LIME COMPANY | Year: 2018 | CO2: 213932.1
+Anomaly detected — Facility: ARKANSAS LIME COMPANY | Year: 2014 | CO2: 209329.3
+Anomaly detected — Facility: ARKANSAS LIME COMPANY | Year: 2011 | CO2: 196567.5

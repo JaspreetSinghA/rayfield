@@ -3,6 +3,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import IsolationForest
 from sklearn.metrics import mean_squared_error
+import os
+from dotenv import load_dotenv
 
 # Feature engineering: add rolling average and percent change
 def add_features(df, target_col='Unit CO2 emissions (non-biogenic) '):
@@ -36,3 +38,27 @@ def train_anomaly_detector(X):
 
 def predict_anomalies(model, X):
     return model.predict(X) == -1 
+
+# GPT summary integration
+try:
+    import openai
+except ImportError:
+    openai = None
+
+def gpt_summary(prompt_text):
+    load_dotenv()
+    api_key = os.getenv('OPENAI_API_KEY')
+    if not api_key or not openai:
+        return generate_mock_summary_text(prompt_text)
+    openai.api_key = api_key
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt_text}]
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"[GPT ERROR] {str(e)}\n" + generate_mock_summary_text(prompt_text)
+
+def generate_mock_summary_text(prompt_text):
+    return f"[MOCK SUMMARY] {prompt_text}" 

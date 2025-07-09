@@ -1,50 +1,49 @@
-# Rayfield Emissions Data Pipeline
+# Rayfield Emissions Data Pipeline & AI/ML Analysis
 
 ## Overview
-This project implements a data pipeline for energy emissions data, including cleaning, feature engineering, exploratory analysis, machine learning modeling, anomaly detection, and automated summary generation.
+This project implements a data pipeline for energy emissions data, including cleaning, feature engineering, exploratory analysis, machine learning modeling (regression, decision tree, anomaly detection), and automated summary generation. It is modular, with each major function in its own script.
 
-## Workflow
-1. **Data Loading & Cleaning:**
-   - Loads raw emissions data from `emissions_by_unit.csv`.
-   - Drops missing values and saves cleaned data to `deliverables/cleaned_emissions_by_unit.csv`.
-2. **Feature Engineering:**
-   - Adds rolling 7-day average and percent change columns.
-   - Saves engineered features to `deliverables/features.csv`.
-3. **Model Training & Prediction:**
-   - Trains a linear regression model to predict CO₂ emissions.
-   - Flags records with >±15% deviation from predicted values.
-   - Saves flagged results to `deliverables/flagged_emissions_output.csv`.
-   - Trained model is saved as `deliverables/model.pkl`.
-4. **Anomaly Detection:**
-   - Uses IsolationForest to flag anomalies in emissions data.
-   - Results saved to `deliverables/final_output_with_anomalies.csv`.
-5. **Visualization:**
-   - Generates a line plot of total CO₂ emissions over time (`deliverables/co2_emissions_over_time.png`).
-6. **Summary Generation:**
-   - Produces a mock AI-generated summary of flagged anomalies.
-   - Summary saved to `deliverables/weekly_summary.txt` and attached to final CSV.
+## Scripts & Their Purposes
+- `main_pipeline.py`: Full pipeline from raw data to flagged emissions and summary.
+- `feature_enrichment.py`: Adds advanced features (delta_CO2, prediction_error, error_ratio).
+- `yearly_regression.py`: Linear regression on yearly averages, forecast vs. actual plot.
+- `yearly_decision_tree.py`: Decision tree regression with hyperparameter tuning on yearly averages.
+- `yearly_anomaly_alerts.py`: Detects yearly anomalies, exports alerts and summary, and plots.
+- `force_2025.py`: Forces last row's year to 2025 for Zapier testing.
+- `full_isolation_forest_anomalies.py`: Isolation Forest anomaly detection on a sample of the full dataset, with notes on row limits.
 
-## Usage
-- Run the main pipeline:
-  ```bash
-  python backend/main_pipeline.py
+## Outputs
+All outputs are saved in `backend/deliverables/` and include:
+- Cleaned and enriched CSVs
+- Model files
+- Plots (PNG)
+- Anomaly alerts and logs
+- Weekly summaries (text)
+
+## Using GPT Summaries
+- To enable real GPT-generated summaries, create a `.env` file in the `backend/` directory with:
   ```
-- Outputs will be saved in the `deliverables/` folder.
-
-## Files
-- `ai_module.py`: Reusable functions for feature engineering, model training, prediction, and anomaly detection.
-- `main_pipeline.py`: Orchestrates the full workflow.
-- `deliverables/`: Contains all outputs (cleaned data, features, flagged results, model, plots, summaries).
+  OPENAI_API_KEY=your_openai_api_key_here
+  ```
+- The scripts will use this key to call the OpenAI API for summary generation (see below for integration).
 
 ## Requirements
 - Python 3.8+
-- pandas, scikit-learn, matplotlib, joblib
+- pandas, scikit-learn, matplotlib, joblib, python-dotenv, openai
 
 Install dependencies:
 ```bash
-pip install pandas scikit-learn matplotlib joblib
+pip install pandas scikit-learn matplotlib joblib python-dotenv openai
 ```
 
+## How to Run
+- Run any script with:
+  ```bash
+  python3 backend/<script_name>.py
+  ```
+- Outputs will appear in `backend/deliverables/`.
+
 ## Notes
-- The pipeline is designed for extensibility and can be adapted for other energy datasets or ML models.
-- For real AI summaries, integrate with the OpenAI API in place of the mock summary function. 
+- Large files are processed with row limits for performance; see notes in output files.
+- For real GPT summaries, set your API key in `.env` and use the provided summary functions.
+- All scripts are modular and can be run independently. 

@@ -1,7 +1,10 @@
 import pandas as pd
+from ai_module import gpt_summary
 
+TABLES = 'backend/deliverables/tables/'
+LOGS = 'backend/deliverables/logs/'
 # Load the output file from Task 2.3
-df_flagged = pd.read_csv("flagged_emissions_output.csv")
+df_flagged = pd.read_csv(TABLES + "flagged_emissions_output.csv")
 
 # Filter for flagged records only
 flagged = df_flagged[df_flagged['Flagged'] == 'Yes']
@@ -36,9 +39,10 @@ This summary supports audit readiness by highlighting key anomalies.
 """
     return summary
 
-summary = generate_mock_summary(df_flagged)
+summary_prompt = f"Generate a compliance summary for {flagged_count} flagged out of {total} records. Give 2 example facilities with their actual, predicted, and deviation."
+summary = gpt_summary(summary_prompt)
 print(summary)
-with open("weekly_summary.txt", "w") as f:
+with open(LOGS + "weekly_summary.txt", "w") as f:
     f.write(summary)
 
 df_flagged['summary'] = summary

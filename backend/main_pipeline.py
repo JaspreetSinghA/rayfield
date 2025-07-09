@@ -2,37 +2,56 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import joblib
-from ai_module import add_features, train_regression, predict, tune_regression, train_anomaly_detector, predict_anomalies
+from ai_module import add_features, train_regression, predict, tune_regression, train_anomaly_detector, predict_anomalies, gpt_summary
+import numpy as np
 
 # Ensure deliverables folder exists
-os.makedirs('deliverables', exist_ok=True)
+os.makedirs('backend/deliverables', exist_ok=True)
 
 # Load and clean data
-raw = pd.read_csv('emissions_by_unit.csv', encoding='latin1')
+raw = pd.read_csv('backend/emissions_by_unit.csv', encoding='latin1')
+print(f"[1/12] Loaded raw data: shape={raw.shape}")
 df_clean = raw.dropna()
-df_clean.to_csv('deliverables/cleaned_emissions_by_unit.csv', index=False)
+print(f"[2/12] Cleaned data: shape={df_clean.shape}")
+if df_clean.empty:
+    raise ValueError("Cleaned DataFrame is empty after dropna(). Check input file.")
+df_clean.to_csv(TABLES + 'cleaned_emissions_by_unit.csv', index=False)
+print("[3/12] Saved cleaned data.")
 
 # Feature engineering
 features = add_features(df_clean)
-features.to_csv('deliverables/features.csv', index=False)
+print(f"[4/12] Feature engineering complete: shape={features.shape}\n{features.head()}")
+
+# Clean features: replace inf/-inf with NaN, then drop all NaN rows
+features.replace([np.inf, -np.inf], np.nan, inplace=True)
+features.dropna(inplace=True)
+print(f"[5/12] Cleaned features (removed inf/NaN): shape={features.shape}")
+if features.empty:
+    raise ValueError("Features DataFrame is empty after cleaning. Check feature engineering.")
+features.to_csv(TABLES + 'features.csv', index=False)
+print("[6/12] Saved features.")
 
 # Prepare regression
 X = features[['Reporting Year', 'rolling_7d', 'pct_change']]
 y = features['Unit CO2 emissions (non-biogenic) ']
+print(f"[7/12] Prepared regression features: X.shape={X.shape}, y.shape={y.shape}")
 
 # Train/test split
 from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+print(f"[8/12] Train/test split: X_train={X_train.shape}, X_test={X_test.shape}")
 
 # Model training
 model = train_regression(X_train, y_train)
-joblib.dump(model, 'deliverables/model.pkl')
+joblib.dump(model, TABLES + 'model.pkl')
+print("[9/12] Trained regression model and saved model.pkl.")
 
 # Prediction
 features['Predicted CO2'] = predict(model, X)
 features['Deviation (%)'] = ((features['Unit CO2 emissions (non-biogenic) '] - features['Predicted CO2']) / features['Predicted CO2']) * 100
 features['Flagged'] = features['Deviation (%)'].apply(lambda x: 'Yes' if abs(x) > 15 else 'No')
-features.to_csv('deliverables/flagged_emissions_output.csv', index=False)
+features.to_csv(TABLES + 'flagged_emissions_output.csv', index=False)
+print("[10/12] Saved flagged emissions output.")
 
 # Visualization
 plt.figure(figsize=(10, 6))
@@ -41,28 +60,25 @@ plt.title('Total CO2 Emissions Over Time')
 plt.ylabel('CO2 Emissions (metric tons)')
 plt.xlabel('Year')
 plt.grid(True)
-plt.savefig('deliverables/co2_emissions_over_time.png')
+plt.savefig(PLOTS + 'co2_emissions_over_time.png')
 plt.close()
+print("[11/12] Saved CO2 emissions over time plot.")
 
 # Anomaly detection (optional)
 anom_model = train_anomaly_detector(X_train)
 features['Anomaly'] = predict_anomalies(anom_model, X)
-features.to_csv('deliverables/final_output_with_anomalies.csv', index=False)
+features.to_csv(TABLES + 'final_output_with_anomalies.csv', index=False)
 
 # Generate mock summary
 flagged = features[features['Flagged'] == 'Yes']
 total = len(features)
 flagged_count = len(flagged)
-summary = f"""
-🧾 AI-Generated Compliance Summary:\n\nOut of {total} records, {flagged_count} were flagged for emissions significantly outside the expected baseline (±15%).\n\n"""
-if flagged_count >= 2:
-    sample = flagged.sample(n=2, random_state=42).reset_index(drop=True)
-    for i, row in sample.iterrows():
-        summary += f"- Facility {row['Facility Id']} reported {row['Unit CO2 emissions (non-biogenic) ']:.0f} vs predicted {row['Predicted CO2']:.0f} → deviation: {row['Deviation (%)']:.1f}%\n"
-summary += "\nThis summary supports audit readiness by highlighting key anomalies."
-with open('deliverables/weekly_summary.txt', 'w') as f:
+# Generate summary using GPT or mock
+summary_prompt = f"Generate a compliance summary for {flagged_count} flagged out of {total} records. Give 2 example facilities with their actual, predicted, and deviation."  # You can customize this prompt
+summary = gpt_summary(summary_prompt)
+with open(LOGS + 'weekly_summary.txt', 'w') as f:
     f.write(summary)
-
 # Attach summary to CSV
 features['summary'] = summary
-features.to_csv('deliverables/final_output_with_summary.csv', index=False) 
+features.to_csv(TABLES + 'final_output_with_summary.csv', index=False)
+print("Pipeline complete. All outputs saved in backend/deliverables/.")

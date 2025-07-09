@@ -1,0 +1,7 @@
+Weekly Emissions Summary:
+In the year 2022, actual average CO₂ emissions were 107423.73 metric tons,
+compared to a predicted value of 118600.05.
+
+The prediction error was 11176.32, which is within the anomaly threshold.
+
+No anomalies were detected in the latest year (2022).

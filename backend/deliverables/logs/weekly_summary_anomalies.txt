@@ -1,2 +1,0 @@
-⚠️ 1 anomaly(s) detected.
-Last anomaly: 2019.0 with 35104.19 kWh.

@@ -1,1 +1,6 @@
-.env 
+deliverables/tables/*
+deliverables/plots/*
+deliverables/logs/*
+!deliverables/tables/.gitkeep
+!deliverables/plots/.gitkeep
+!deliverables/logs/.gitkeep 

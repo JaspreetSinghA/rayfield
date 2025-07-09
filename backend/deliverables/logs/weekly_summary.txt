@@ -1,9 +1,0 @@
-
-🧾 AI-Generated Compliance Summary:
-
-Out of 165518 records, 147218 were flagged for emissions significantly outside the expected baseline (±15%).
-
-- Facility 1007965 reported 7224 vs predicted 80634 → deviation: -91.0%
-- Facility 1002565 reported 7368 vs predicted 9748 → deviation: -24.4%
-
-This summary supports audit readiness by highlighting key anomalies.

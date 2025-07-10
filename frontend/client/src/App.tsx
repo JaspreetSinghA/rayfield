@@ -15,6 +15,8 @@ import { UploadSubmission } from "@/pages/UploadSubmission";
 import { TextInput } from "@/pages/TextInput";
 import { Review } from "@/pages/Review";
 import { Submission } from "@/pages/Submission";
+import GetHelp from "@/pages/GetHelp";
+import UploadHistory from "@/pages/UploadHistory";
 
 function Router() {
   return (
@@ -30,13 +32,15 @@ function Router() {
       {/* Feature pages */}
       <Route path="/flagged-anomalies" component={FlaggedAnomalies} />
       <Route path="/export-reports" component={ExportReports} />
+      <Route path="/upload-history" component={UploadHistory} />
       
       {/* Submission workflow pages */}
       <Route path="/upload-submission" component={UploadSubmission} />
       <Route path="/text-input" component={TextInput} />
       <Route path="/review" component={Review} />
       <Route path="/submission" component={Submission} />
-      
+      {/* Help page */}
+      <Route path="/get-help" component={GetHelp} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>

@@ -145,9 +145,11 @@ export const Dashboard = (): JSX.Element => {
                 <p className="[font-family:'Montserrat',Helvetica] font-normal text-base text-gray-600 mb-6">
                   Get help, documentation, and contact our dedicated support team
                 </p>
-                <Button className="w-full h-12 bg-black hover:bg-black/80 [font-family:'Montserrat',Helvetica] font-medium text-base border-2 border-black">
-                  Get Help
-                </Button>
+                <Link href="/get-help">
+                  <Button className="w-full h-12 bg-black hover:bg-black/80 [font-family:'Montserrat',Helvetica] font-medium text-base border-2 border-black">
+                    Get Help
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           </div>

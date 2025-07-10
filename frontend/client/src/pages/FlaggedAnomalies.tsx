@@ -27,6 +27,7 @@ export const FlaggedAnomalies = (): JSX.Element => {
   const [filter, setFilter] = useState<string>("all");
   const [search, setSearch] = useState<string>("");
   const [date, setDate] = useState<string>("");
+  const [currentCsv, setCurrentCsv] = useState<string | null>(null);
 
   // Compute counts for summary cards
   const highCount = anomalies.filter(a => a.severity === "High").length;
@@ -35,6 +36,9 @@ export const FlaggedAnomalies = (): JSX.Element => {
 
   useEffect(() => {
     fetchAnomalies();
+    // Try to get the last uploaded CSV name from localStorage or API if available
+    const lastCsv = localStorage.getItem("last_uploaded_csv");
+    if (lastCsv) setCurrentCsv(lastCsv);
   }, []);
 
   // Fetch from improved backend endpoint
@@ -159,6 +163,11 @@ export const FlaggedAnomalies = (): JSX.Element => {
 
       {/* Main Content */}
       <main className="flex-1 px-6 py-8 w-full">
+        {currentCsv && (
+          <div className="mb-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded">
+            <b>Note:</b> You are viewing anomalies for the most recently uploaded file: <span className="font-mono">{currentCsv}</span>. Previous sessions are not shown here.
+          </div>
+        )}
         <div>
           <div className="mb-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

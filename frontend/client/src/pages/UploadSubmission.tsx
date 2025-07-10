@@ -22,6 +22,8 @@ export const UploadSubmission = (): JSX.Element => {
     category: "",
     description: ""
   });
+  const [anomalyThreshold, setAnomalyThreshold] = useState<number | 'auto'>(0.05);
+  const [thresholdError, setThresholdError] = useState<string>("");
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -68,6 +70,10 @@ export const UploadSubmission = (): JSX.Element => {
       alert("Please upload at least one CSV file");
       return;
     }
+    if (thresholdError) {
+      alert(thresholdError);
+      return;
+    }
 
     setIsProcessing(true);
     setProcessingStep("Uploading files...");
@@ -77,10 +83,17 @@ export const UploadSubmission = (): JSX.Element => {
       formDataToSend.append('title', formData.title || 'Energy Data Analysis');
       formDataToSend.append('category', formData.category || 'energy-analysis');
       formDataToSend.append('description', formData.description || 'Energy data processing and anomaly detection');
+      formDataToSend.append('anomaly_threshold', anomalyThreshold === 'auto' ? 'auto' : anomalyThreshold.toString());
 
       uploadedFiles.forEach((file, index) => {
         formDataToSend.append('files', file);
       });
+
+      // Save the first uploaded CSV file name to localStorage
+      const firstCsv = uploadedFiles.find(f => f.name.endsWith('.csv'));
+      if (firstCsv) {
+        localStorage.setItem('last_uploaded_csv', firstCsv.name);
+      }
 
       setProcessingStep("Processing data...");
       const uploadResponse = await apiClient.upload.submitFiles(formDataToSend) as { submission_id: string, files: any[] };
@@ -209,6 +222,38 @@ export const UploadSubmission = (): JSX.Element => {
                     value={formData.description}
                     onChange={(e) => handleFormChange('description', e.target.value)}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="anomaly-threshold" className="[font-family:'Montserrat',Helvetica] font-medium">
+                    Anomaly Detection Threshold (%)
+                  </Label>
+                  <Input
+                    id="anomaly-threshold"
+                    type="number"
+                    min="0.01"
+                    max="99.99"
+                    step="0.01"
+                    value={anomalyThreshold === 'auto' ? '' : (anomalyThreshold * 100)}
+                    placeholder="e.g. 5 for 5% (or leave blank for auto)"
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (val === '' || isNaN(Number(val))) {
+                        setAnomalyThreshold('auto');
+                        setThresholdError("");
+                      } else {
+                        const num = Number(val);
+                        if (num <= 0 || num >= 100) {
+                          setThresholdError("Please enter a value between 0 and 100 (exclusive)");
+                          setAnomalyThreshold('auto');
+                        } else {
+                          setThresholdError("");
+                          setAnomalyThreshold(num / 100);
+                        }
+                      }
+                    }}
+                  />
+                  {thresholdError && <div className="text-xs text-red-500">{thresholdError}</div>}
+                  <div className="text-xs text-gray-500">Set the expected proportion of anomalies (e.g. 5 for 5%). Leave blank for automatic detection.</div>
                 </div>
               </CardContent>
             </Card>

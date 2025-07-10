@@ -18,6 +18,20 @@ export const EnergyChart: React.FC<ChartProps> = ({
   title = "Energy Emissions Over Time",
   height = 300 
 }) => {
+  if (!data || !data.emissions || !Array.isArray(data.emissions) || data.emissions.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl">
+            {title}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-gray-500 text-center py-8">No emissions data available for this submission.</div>
+        </CardContent>
+      </Card>
+    );
+  }
   const maxEmission = Math.max(...data.emissions);
   const minEmission = Math.min(...data.emissions);
   const range = maxEmission - minEmission;

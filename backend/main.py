@@ -12,6 +12,7 @@ import pandas as pd
 import io
 import sqlite3
 from pathlib import Path as FilePath
+import time
 
 # Import your existing modules
 try:
@@ -398,6 +399,7 @@ async def upload_files(
     title: str = Form(...),
     category: str = Form(...),
     description: str = Form(""),
+    anomaly_threshold: str = Form("auto"),
     current_user: dict = Depends(get_current_user)
 ):
     try:
@@ -419,20 +421,15 @@ async def upload_files(
         conn.commit()
         conn.close()
         
+        # Always set submission_csv_path to the first uploaded CSV
+        submission_csv_path = None
         for file in files:
             try:
-                # Process file with your existing modules
                 content = await file.read()
-                
-                # Save file to disk (in production, use cloud storage)
                 file_path = f"uploads/{submission_id}_{file.filename}"
-                
                 with open(file_path, "wb") as f:
                     f.write(content)
-                
-                # If CSV, validate before copying and running pipeline
-                if file.filename.endswith('.csv'):
-                    import shutil
+                if file.filename.endswith('.csv') and submission_csv_path is None:
                     import pandas as pd
                     try:
                         df = pd.read_csv(file_path, encoding='latin1')
@@ -455,10 +452,12 @@ async def upload_files(
                             "files": uploaded_files,
                             "submission_id": submission_id
                         }
-                    shutil.copy(file_path, "backend/emissions_by_unit.csv")
-                    tables_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'deliverables', 'tables')
-                    os.makedirs(tables_dir, exist_ok=True)
-                    shutil.copy(file_path, os.path.join(tables_dir, 'emissions_by_unit.csv'))
+                    submission_csv_path = file_path
+                uploaded_files.append({
+                    "filename": file.filename,
+                    "size": len(content),
+                    "file_path": file_path
+                })
             except Exception as file_error:
                 print(f"File processing error: {file_error}")
                 uploaded_files.append({
@@ -466,7 +465,6 @@ async def upload_files(
                     "size": 0,
                     "error": str(file_error)
                 })
-
         # Orchestrate pipeline scripts
         import subprocess
         import sys
@@ -479,10 +477,19 @@ async def upload_files(
             "excel_emissions_report.py"
         ]
         pipeline_logs = []
+        # Always pass env vars for per-submission processing
+        env = os.environ.copy()
+        env["ANOMALY_THRESHOLD"] = anomaly_threshold
+        env["SUBMISSION_ID"] = str(submission_id)
+        if submission_csv_path:
+            env["SUBMISSION_CSV"] = os.path.abspath(submission_csv_path)
+        else:
+            # Fallback to global file for legacy support
+            env["SUBMISSION_CSV"] = os.path.abspath("backend/emissions_by_unit.csv")
         for script in pipeline_scripts:
             script_path = os.path.join(backend_dir, script)
             try:
-                result = subprocess.run([sys.executable, script_path], capture_output=True, text=True, check=True)
+                result = subprocess.run([sys.executable, script_path], capture_output=True, text=True, check=True, env=env)
                 pipeline_logs.append({"script": script, "stdout": result.stdout, "stderr": result.stderr, "status": "success"})
             except subprocess.CalledProcessError as e:
                 print(f"Pipeline error in {script}: {e.stderr}")
@@ -601,20 +608,29 @@ async def get_submission_results(
     import pandas as pd
     results_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'deliverables', 'tables')
     summary_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'deliverables', 'logs')
-    anomalies_path = os.path.join(results_dir, 'final_output_with_anomalies.csv')
-    summary_path = os.path.join(summary_dir, 'weekly_summary.txt')
-    chart_path = os.path.join(results_dir, 'features.csv')
+    anomalies_path = os.path.join(results_dir, f'final_output_with_anomalies_{submission_id}.csv')
+    summary_path = os.path.join(summary_dir, f'weekly_summary_{submission_id}.txt')
+    chart_path = os.path.join(results_dir, f'features_{submission_id}.csv')
+    # Fallback to global files if per-submission files are missing
+    if not os.path.exists(anomalies_path):
+        anomalies_path = os.path.join(results_dir, 'final_output_with_anomalies.csv')
+    if not os.path.exists(summary_path):
+        summary_path = os.path.join(summary_dir, 'weekly_summary.txt')
+    if not os.path.exists(chart_path):
+        chart_path = os.path.join(results_dir, 'features.csv')
+    start_time = time.time()
     try:
         anomalies_data = []
         total_records = 0
         anomalies_found = 0
         if os.path.exists(anomalies_path):
             df = pd.read_csv(anomalies_path)
+            print(f"[DEBUG] Loaded anomalies file: {anomalies_path}, shape={df.shape}")
             total_records = int(len(df))
-            # Count IsolationForest anomalies
             if 'Anomaly' in df.columns:
                 anomalies_found = int((df['Anomaly'] == True).sum())
-            # Build anomalies_data for IsolationForest anomalies only, but limit to 100
+            else:
+                print(f"[DEBUG] 'Anomaly' column not found in {anomalies_path}")
             max_anomalies = 100
             anomaly_rows = [row for idx, row in df.iterrows() if row.get('Anomaly', False) == True]
             for idx, row in enumerate(anomaly_rows[:max_anomalies]):
@@ -634,7 +650,6 @@ async def get_submission_results(
                     deviation = float(row.get("Deviation (%)", row.get("Deviation (%) ", 0)))
                 except Exception:
                     deviation = None
-                # Assign severity based on deviation
                 if deviation is not None:
                     if abs(deviation) >= 30:
                         severity = "High"
@@ -644,7 +659,6 @@ async def get_submission_results(
                         severity = "Low"
                 else:
                     severity = "High"
-                # Build full anomaly dict with all columns
                 anomaly_dict = {
                     "id": int(idx),
                     "facility": str(facility),
@@ -653,11 +667,12 @@ async def get_submission_results(
                     "severity": severity,
                     "timestamp": f"{year}-01-01T00:00:00Z"
                 }
-                # Add all other columns from the row
                 for k, v in row.items():
                     if k not in anomaly_dict:
                         anomaly_dict[k] = v
                 anomalies_data.append(anomaly_dict)
+        else:
+            print(f"[DEBUG] Anomalies file not found: {anomalies_path}")
         summary = None
         if os.path.exists(summary_path):
             with open(summary_path, 'r') as f:
@@ -667,7 +682,6 @@ async def get_submission_results(
             chart_df = pd.read_csv(chart_path)
             labels = chart_df["Reporting Year"].tolist()[:100]
             emissions = chart_df["Unit CO2 emissions (non-biogenic) "].tolist()[:100]
-            # Find anomaly indices: match years in anomalies_data
             anomaly_years = set(a["year"] for a in anomalies_data)
             anomaly_indices = [i for i, y in enumerate(labels) if y in anomaly_years]
             chart_data = {
@@ -675,20 +689,41 @@ async def get_submission_results(
                 "emissions": emissions,
                 "anomaly_indices": anomaly_indices
             }
+        processing_time = time.time() - start_time
         return {
             "submission_id": str(submission_id),
             "anomalies_found": int(anomalies_found),
             "total_records": int(total_records),
-            "processing_time": float(0),
+            "processing_time": float(processing_time),
             "anomalies_data": anomalies_data,
             "summary": summary,
             "chart_data": chart_data
         }
     except Exception as e:
+        print(f"[DEBUG] Exception in get_submission_results: {e}")
         return JSONResponse(status_code=500, content={
             "message": "Failed to load results.",
             "error": str(e)
         })
+
+@app.get("/api/submissions/history")
+async def get_submission_history(current_user: dict = Depends(get_current_user)):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, title, category, description, created_at, file_path FROM submissions ORDER BY created_at DESC')
+    submissions = cursor.fetchall()
+    conn.close()
+    history = []
+    for row in submissions:
+        history.append({
+            "id": row[0],
+            "title": row[1],
+            "category": row[2],
+            "description": row[3],
+            "created_at": row[4],
+            "file_path": row[5],
+        })
+    return history
 
 # Serve static files for frontend
 @app.get("/static/{path:path}")

@@ -23,9 +23,14 @@ export const ExportReports = (): JSX.Element => {
   const [reports, setReports] = useState<ReportFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Add state for current CSV filename
+  const [currentCsv, setCurrentCsv] = useState<string | null>(null);
 
   useEffect(() => {
     fetchReports();
+    // Try to get the last uploaded CSV name from localStorage or API if available
+    const lastCsv = localStorage.getItem("last_uploaded_csv");
+    if (lastCsv) setCurrentCsv(lastCsv);
   }, []);
 
   const fetchReports = async () => {
@@ -280,6 +285,11 @@ export const ExportReports = (): JSX.Element => {
             </Tabs>
           )}
         </div>
+        {currentCsv && (
+          <div className="mb-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded">
+            <b>Note:</b> You are viewing reports for the most recently uploaded file: <span className="font-mono">{currentCsv}</span>. Previous sessions are not shown here.
+          </div>
+        )}
       </main>
     </div>
   );

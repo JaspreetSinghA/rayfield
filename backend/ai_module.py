@@ -31,8 +31,8 @@ def tune_regression(X, y):
     return grid.best_estimator_, grid.best_params_
 
 # Anomaly detection using IsolationForest
-def train_anomaly_detector(X):
-    model = IsolationForest(contamination=0.05, random_state=42)
+def train_anomaly_detector(X, contamination=0.05):
+    model = IsolationForest(contamination=contamination, random_state=42)
     model.fit(X)
     return model
 

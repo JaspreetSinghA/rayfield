@@ -6,12 +6,32 @@ from ai_module import add_features, train_regression, predict, tune_regression, 
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 
+# Output directories
+TABLES = 'backend/deliverables/tables/'
+PLOTS = 'backend/deliverables/plots/'
+LOGS = 'backend/deliverables/logs/'
+
+# Debug: Print environment variables and output paths
+submission_id = os.environ.get('SUBMISSION_ID', None)
+submission_csv = os.environ.get('SUBMISSION_CSV', None)
+anomaly_threshold_env = os.environ.get('ANOMALY_THRESHOLD', None)
+print(f"[DEBUG] SUBMISSION_ID: {submission_id}")
+print(f"[DEBUG] SUBMISSION_CSV: {submission_csv}")
+print(f"[DEBUG] ANOMALY_THRESHOLD: {anomaly_threshold_env}")
+if submission_id:
+    output_suffix = f'_{submission_id}'
+else:
+    output_suffix = ''
+print(f"[DEBUG] Output files will use suffix: {output_suffix}")
+print(f"[DEBUG] Output directory: {TABLES}")
+
 # Ensure deliverables folder exists
 os.makedirs('backend/deliverables', exist_ok=True)
 
 # Load and clean data
-raw = pd.read_csv('backend/emissions_by_unit.csv', encoding='latin1')
-print(f"[1/12] Loaded raw data: shape={raw.shape}")
+input_csv = os.environ.get('SUBMISSION_CSV', 'backend/emissions_by_unit.csv')
+raw = pd.read_csv(input_csv, encoding='latin1')
+print(f"[1/12] Loaded raw data from {input_csv}: shape={raw.shape}")
 df_clean = raw.dropna()
 print(f"[2/12] Cleaned data: shape={df_clean.shape}")
 if df_clean.empty:
@@ -29,7 +49,13 @@ features.dropna(inplace=True)
 print(f"[5/12] Cleaned features (removed inf/NaN): shape={features.shape}")
 if features.empty:
     raise ValueError("Features DataFrame is empty after cleaning. Check feature engineering.")
-features.to_csv(TABLES + 'features.csv', index=False)
+# Get submission_id from environment for per-submission output
+# submission_id = os.environ.get('SUBMISSION_ID', None) # This line is now redundant as it's handled above
+# if submission_id: # This line is now redundant as it's handled above
+#     output_suffix = f'_{submission_id}' # This line is now redundant as it's handled above
+# else: # This line is now redundant as it's handled above
+#     output_suffix = '' # This line is now redundant as it's handled above
+features.to_csv(TABLES + f'features{output_suffix}.csv', index=False)
 print("[6/12] Saved features.")
 
 # Prepare regression
@@ -51,17 +77,37 @@ print("[9/12] Trained regression model and saved model.pkl.")
 features['Predicted CO2'] = predict(model, X)
 features['Deviation (%)'] = ((features['Unit CO2 emissions (non-biogenic) '] - features['Predicted CO2']) / features['Predicted CO2']) * 100
 features['Flagged'] = features['Deviation (%)'].apply(lambda x: 'Yes' if abs(x) > 15 else 'No')
-features.to_csv(TABLES + 'flagged_emissions_output.csv', index=False)
+features.to_csv(TABLES + f'flagged_emissions_output{output_suffix}.csv', index=False)
 print("[10/12] Saved flagged emissions output.")
+
+# Read anomaly threshold from environment variable
+# anomaly_threshold_env = os.environ.get('ANOMALY_THRESHOLD', 'auto') # This line is now redundant as it's handled above
+if anomaly_threshold_env == 'auto' or anomaly_threshold_env == '':
+    anomaly_threshold = 'auto'
+else:
+    try:
+        val = float(anomaly_threshold_env)
+        if val > 0 and val < 1:
+            anomaly_threshold = val
+        elif val > 0 and val < 100:
+            anomaly_threshold = val / 100.0
+        else:
+            anomaly_threshold = 'auto'
+    except Exception:
+        anomaly_threshold = 'auto'
+print(f"[Anomaly Detection] Using contamination: {anomaly_threshold}")
 
 # Improved Anomaly detection with scaling and more features
 anomaly_features = features[['Unit CO2 emissions (non-biogenic) ', 'rolling_7d', 'pct_change']]
 scaler = StandardScaler()
 anomaly_features_scaled = scaler.fit_transform(anomaly_features)
 from ai_module import train_anomaly_detector, predict_anomalies
-anom_model = train_anomaly_detector(anomaly_features_scaled)
+if anomaly_threshold == 'auto':
+    anom_model = train_anomaly_detector(anomaly_features_scaled, contamination='auto')
+else:
+    anom_model = train_anomaly_detector(anomaly_features_scaled, contamination=anomaly_threshold)
 features['Anomaly'] = predict_anomalies(anom_model, anomaly_features_scaled)
-features.to_csv(TABLES + 'final_output_with_anomalies.csv', index=False)
+features.to_csv(TABLES + f'final_output_with_anomalies{output_suffix}.csv', index=False)
 
 # Visualization
 plt.figure(figsize=(10, 6))
@@ -85,5 +131,5 @@ with open(LOGS + 'weekly_summary.txt', 'w') as f:
     f.write(summary)
 # Attach summary to CSV
 features['summary'] = summary
-features.to_csv(TABLES + 'final_output_with_summary.csv', index=False)
+features.to_csv(TABLES + f'final_output_with_summary{output_suffix}.csv', index=False)
 print("Pipeline complete. All outputs saved in backend/deliverables/.")

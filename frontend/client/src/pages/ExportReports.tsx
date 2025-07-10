@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,27 +8,48 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { Download, FileText, Calendar, Filter, RefreshCw } from "lucide-react";
+import { apiClient } from "@/lib/api";
+
+interface ReportFile {
+  name: string;
+  type: string;
+  size: number;
+  modified: string;
+  download_url: string;
+}
 
 export const ExportReports = (): JSX.Element => {
   const [activeTab, setActiveTab] = useState("system");
+  const [reports, setReports] = useState<ReportFile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const systemReports = [
-    { id: 1, name: "System Performance Report", type: "Performance", date: "2025-01-08", size: "2.4 MB", status: "Ready" },
-    { id: 2, name: "Security Audit Report", type: "Security", date: "2025-01-07", size: "1.8 MB", status: "Ready" },
-    { id: 3, name: "User Activity Report", type: "Activity", date: "2025-01-06", size: "3.2 MB", status: "Processing" },
-  ];
+  useEffect(() => {
+    fetchReports();
+  }, []);
 
-  const analyticsReports = [
-    { id: 4, name: "Monthly Analytics Summary", type: "Analytics", date: "2025-01-08", size: "1.6 MB", status: "Ready" },
-    { id: 5, name: "Traffic Analysis Report", type: "Traffic", date: "2025-01-07", size: "2.1 MB", status: "Ready" },
-    { id: 6, name: "User Behavior Analysis", type: "Behavior", date: "2025-01-06", size: "2.8 MB", status: "Failed" },
-  ];
+  const fetchReports = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await apiClient.request<ReportFile[]>("/api/reports/list");
+      setReports(res);
+    } catch (err: any) {
+      setError("Failed to fetch reports");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const complianceReports = [
-    { id: 7, name: "GDPR Compliance Report", type: "GDPR", date: "2025-01-08", size: "1.2 MB", status: "Ready" },
-    { id: 8, name: "SOX Compliance Report", type: "SOX", date: "2025-01-07", size: "1.9 MB", status: "Ready" },
-    { id: 9, name: "ISO 27001 Audit Report", type: "ISO", date: "2025-01-06", size: "2.5 MB", status: "Ready" },
-  ];
+  // Group reports by type
+  const grouped = {
+    system: reports.filter(r => r.type === "tables" && r.name.includes("system")),
+    analytics: reports.filter(r => r.type === "tables" && r.name.includes("analytics")),
+    compliance: reports.filter(r => r.type === "tables" && r.name.includes("compliance")),
+    tables: reports.filter(r => r.type === "tables"),
+    logs: reports.filter(r => r.type === "logs"),
+    plots: reports.filter(r => r.type === "plots"),
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -39,11 +60,11 @@ export const ExportReports = (): JSX.Element => {
     }
   };
 
-  const renderReportTable = (reports: any[]) => (
+  const renderReportTable = (reports: ReportFile[]) => (
     <div className="space-y-4">
       {reports.map((report) => (
         <div
-          key={report.id}
+          key={report.type + report.name}
           className="flex items-center justify-between p-4 bg-white border rounded-lg hover:shadow-md transition-shadow"
         >
           <div className="flex-1">
@@ -52,54 +73,31 @@ export const ExportReports = (): JSX.Element => {
               <h3 className="[font-family:'Montserrat',Helvetica] font-medium text-lg text-gray-900">
                 {report.name}
               </h3>
-              <Badge className={getStatusColor(report.status)}>
-                {report.status}
+              <Badge className="bg-green-100 text-green-800">
+                {report.type}
               </Badge>
             </div>
             <div className="flex items-center space-x-6 text-sm text-gray-600">
               <span className="[font-family:'Montserrat',Helvetica] font-normal">
-                Type: {report.type}
+                Size: {(report.size / 1024 / 1024).toFixed(2)} MB
               </span>
               <span className="[font-family:'Montserrat',Helvetica] font-normal">
-                Date: {report.date}
-              </span>
-              <span className="[font-family:'Montserrat',Helvetica] font-normal">
-                Size: {report.size}
+                Modified: {new Date(report.modified).toLocaleString()}
               </span>
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            {report.status === "Ready" && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="[font-family:'Montserrat',Helvetica] font-medium text-green-600 hover:bg-green-50"
-              >
+            <Button
+              variant="outline"
+              size="sm"
+              className="[font-family:'Montserrat',Helvetica] font-medium text-green-600 hover:bg-green-50"
+              asChild
+            >
+              <a href={report.download_url} target="_blank" rel="noopener noreferrer">
                 <Download size={16} className="mr-2" />
                 Download
-              </Button>
-            )}
-            {report.status === "Processing" && (
-              <Button
-                variant="outline"
-                size="sm"
-                disabled
-                className="[font-family:'Montserrat',Helvetica] font-medium"
-              >
-                <RefreshCw size={16} className="mr-2 animate-spin" />
-                Processing
-              </Button>
-            )}
-            {report.status === "Failed" && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="[font-family:'Montserrat',Helvetica] font-medium text-red-600 hover:bg-red-50"
-              >
-                <RefreshCw size={16} className="mr-2" />
-                Retry
-              </Button>
-            )}
+              </a>
+            </Button>
           </div>
         </div>
       ))}
@@ -214,67 +212,73 @@ export const ExportReports = (): JSX.Element => {
           </Card>
 
           {/* Reports Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="system" className="[font-family:'Montserrat',Helvetica] font-medium">
-                System Reports
-              </TabsTrigger>
-              <TabsTrigger value="analytics" className="[font-family:'Montserrat',Helvetica] font-medium">
-                Analytics Reports
-              </TabsTrigger>
-              <TabsTrigger value="compliance" className="[font-family:'Montserrat',Helvetica] font-medium">
-                Compliance Reports
-              </TabsTrigger>
-            </TabsList>
+          {loading ? (
+            <div className="text-center py-8">Loading reports...</div>
+          ) : error ? (
+            <div className="text-center py-8 text-red-600">{error}</div>
+          ) : (
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="system" className="[font-family:'Montserrat',Helvetica] font-medium">
+                  System Reports
+                </TabsTrigger>
+                <TabsTrigger value="analytics" className="[font-family:'Montserrat',Helvetica] font-medium">
+                  Analytics Reports
+                </TabsTrigger>
+                <TabsTrigger value="compliance" className="[font-family:'Montserrat',Helvetica] font-medium">
+                  Compliance Reports
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="system" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl">
-                    System Reports
-                  </CardTitle>
-                  <p className="[font-family:'Montserrat',Helvetica] font-normal text-sm text-gray-600">
-                    Performance, security, and user activity reports
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  {renderReportTable(systemReports)}
-                </CardContent>
-              </Card>
-            </TabsContent>
+              <TabsContent value="system" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl">
+                      System Reports
+                    </CardTitle>
+                    <p className="[font-family:'Montserrat',Helvetica] font-normal text-sm text-gray-600">
+                      Performance, security, and user activity reports
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    {renderReportTable(grouped.tables)}
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-            <TabsContent value="analytics" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl">
-                    Analytics Reports
-                  </CardTitle>
-                  <p className="[font-family:'Montserrat',Helvetica] font-normal text-sm text-gray-600">
-                    Traffic analysis, user behavior, and engagement metrics
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  {renderReportTable(analyticsReports)}
-                </CardContent>
-              </Card>
-            </TabsContent>
+              <TabsContent value="analytics" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl">
+                      Analytics Reports
+                    </CardTitle>
+                    <p className="[font-family:'Montserrat',Helvetica] font-normal text-sm text-gray-600">
+                      Traffic analysis, user behavior, and engagement metrics
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    {renderReportTable(grouped.logs)}
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-            <TabsContent value="compliance" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl">
-                    Compliance Reports
-                  </CardTitle>
-                  <p className="[font-family:'Montserrat',Helvetica] font-normal text-sm text-gray-600">
-                    GDPR, SOX, ISO 27001, and other compliance reports
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  {renderReportTable(complianceReports)}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+              <TabsContent value="compliance" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl">
+                      Compliance Reports
+                    </CardTitle>
+                    <p className="[font-family:'Montserrat',Helvetica] font-normal text-sm text-gray-600">
+                      GDPR, SOX, ISO 27001, and other compliance reports
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    {renderReportTable(grouped.plots)}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          )}
         </div>
       </main>
     </div>

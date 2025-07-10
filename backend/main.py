@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, Path
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -11,7 +11,7 @@ from datetime import datetime
 import pandas as pd
 import io
 import sqlite3
-from pathlib import Path
+from pathlib import Path as FilePath
 
 # Import your existing modules
 try:
@@ -67,7 +67,7 @@ summary_generator = EnergySummaryGenerator()
 DATABASE_URL = "sqlite:///./rayfield.db"
 
 def get_db():
-    db_path = Path("rayfield.db")
+    db_path = FilePath("rayfield.db")
     conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
     return conn
@@ -673,6 +673,59 @@ async def get_submission_results(
 @app.get("/static/{path:path}")
 async def serve_static(path: str):
     return FileResponse(f"static/{path}")
+
+@app.get("/api/reports/list")
+async def list_reports(current_user: dict = Depends(get_current_user)):
+    """
+    List available report files from deliverables/tables, deliverables/logs, and deliverables/plots.
+    Returns metadata: name, type, size, modified date, and download path.
+    """
+    base_dirs = {
+        "tables": os.path.join(os.path.dirname(os.path.abspath(__file__)), "deliverables", "tables"),
+        "logs": os.path.join(os.path.dirname(os.path.abspath(__file__)), "deliverables", "logs"),
+        "plots": os.path.join(os.path.dirname(os.path.abspath(__file__)), "deliverables", "plots"),
+    }
+    report_files = []
+    for rtype, dir_path in base_dirs.items():
+        if not os.path.exists(dir_path):
+            continue
+        for fname in os.listdir(dir_path):
+            if fname.startswith("."):
+                continue
+            fpath = os.path.join(dir_path, fname)
+            if not os.path.isfile(fpath):
+                continue
+            stat = os.stat(fpath)
+            report_files.append({
+                "name": fname,
+                "type": rtype,
+                "size": stat.st_size,
+                "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                "download_url": f"/api/reports/download/{rtype}/{fname}"
+            })
+    return report_files
+
+@app.get("/api/reports/download/{rtype}/{filename:path}")
+async def download_report(
+    rtype: str = Path(..., pattern="^(tables|logs|plots)$"),
+    filename: str = Path(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Download a report file from deliverables/tables, deliverables/logs, or deliverables/plots.
+    """
+    base_dirs = {
+        "tables": os.path.join(os.path.dirname(os.path.abspath(__file__)), "deliverables", "tables"),
+        "logs": os.path.join(os.path.dirname(os.path.abspath(__file__)), "deliverables", "logs"),
+        "plots": os.path.join(os.path.dirname(os.path.abspath(__file__)), "deliverables", "plots"),
+    }
+    if rtype not in base_dirs:
+        raise HTTPException(status_code=400, detail="Invalid report type")
+    dir_path = base_dirs[rtype]
+    file_path = os.path.join(dir_path, filename)
+    if not os.path.isfile(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(file_path, filename=filename)
 
 if __name__ == "__main__":
     import uvicorn

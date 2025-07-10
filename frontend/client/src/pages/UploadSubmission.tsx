@@ -24,6 +24,7 @@ export const UploadSubmission = (): JSX.Element => {
   });
   const [anomalyThreshold, setAnomalyThreshold] = useState<number | 'auto'>(0.05);
   const [thresholdError, setThresholdError] = useState<string>("");
+  const [formError, setFormError] = useState<string>("");
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -70,10 +71,15 @@ export const UploadSubmission = (): JSX.Element => {
       alert("Please upload at least one CSV file");
       return;
     }
+    if (!formData.title.trim() || !formData.category.trim() || !formData.description.trim()) {
+      setFormError("Please provide an analysis title, select a data field, and enter a description before uploading.");
+      return;
+    }
     if (thresholdError) {
       alert(thresholdError);
       return;
     }
+    setFormError("");
 
     setIsProcessing(true);
     setProcessingStep("Uploading files...");
@@ -180,6 +186,9 @@ export const UploadSubmission = (): JSX.Element => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {formError && (
+                  <div className="mb-2 text-red-600 text-sm font-medium">{formError}</div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="title" className="[font-family:'Montserrat',Helvetica] font-medium">
@@ -196,6 +205,7 @@ export const UploadSubmission = (): JSX.Element => {
                   <div className="space-y-2">
                     <Label htmlFor="category" className="[font-family:'Montserrat',Helvetica] font-medium">
                       Data Type
+                        <span className="ml-1 text-xs text-gray-500" title="Select the type of data you are uploading. This helps categorize your analysis and may affect how results are displayed.">(?)</span>
                     </Label>
                     <Select value={formData.category} onValueChange={(value) => handleFormChange('category', value)}>
                       <SelectTrigger>
@@ -209,6 +219,7 @@ export const UploadSubmission = (): JSX.Element => {
                         <SelectItem value="other">Other Energy Data</SelectItem>
                       </SelectContent>
                     </Select>
+                    <div className="text-xs text-gray-500">This field categorizes your upload and may affect how your data is analyzed and displayed in reports.</div>
                   </div>
                 </div>
                 <div className="space-y-2">

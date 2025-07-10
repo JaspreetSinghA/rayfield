@@ -36,8 +36,10 @@ df_clean = raw.dropna()
 print(f"[2/12] Cleaned data: shape={df_clean.shape}")
 if df_clean.empty:
     raise ValueError("Cleaned DataFrame is empty after dropna(). Check input file.")
-df_clean.to_csv(TABLES + 'cleaned_emissions_by_unit.csv', index=False)
-print("[3/12] Saved cleaned data.")
+# Save cleaned data with per-submission suffix
+cleaned_path = TABLES + f'cleaned_emissions_by_unit{output_suffix}.csv'
+df_clean.to_csv(cleaned_path, index=False)
+print(f"[3/12] Saved cleaned data to {cleaned_path}.")
 
 # Feature engineering
 features = add_features(df_clean)
@@ -49,14 +51,10 @@ features.dropna(inplace=True)
 print(f"[5/12] Cleaned features (removed inf/NaN): shape={features.shape}")
 if features.empty:
     raise ValueError("Features DataFrame is empty after cleaning. Check feature engineering.")
-# Get submission_id from environment for per-submission output
-# submission_id = os.environ.get('SUBMISSION_ID', None) # This line is now redundant as it's handled above
-# if submission_id: # This line is now redundant as it's handled above
-#     output_suffix = f'_{submission_id}' # This line is now redundant as it's handled above
-# else: # This line is now redundant as it's handled above
-#     output_suffix = '' # This line is now redundant as it's handled above
-features.to_csv(TABLES + f'features{output_suffix}.csv', index=False)
-print("[6/12] Saved features.")
+# Save features with per-submission suffix
+features_path = TABLES + f'features{output_suffix}.csv'
+features.to_csv(features_path, index=False)
+print(f"[6/12] Saved features to {features_path}.")
 
 # Prepare regression
 X = features[['Reporting Year', 'rolling_7d', 'pct_change']]
@@ -77,8 +75,10 @@ print("[9/12] Trained regression model and saved model.pkl.")
 features['Predicted CO2'] = predict(model, X)
 features['Deviation (%)'] = ((features['Unit CO2 emissions (non-biogenic) '] - features['Predicted CO2']) / features['Predicted CO2']) * 100
 features['Flagged'] = features['Deviation (%)'].apply(lambda x: 'Yes' if abs(x) > 15 else 'No')
-features.to_csv(TABLES + f'flagged_emissions_output{output_suffix}.csv', index=False)
-print("[10/12] Saved flagged emissions output.")
+# Save flagged emissions output with per-submission suffix
+flagged_path = TABLES + f'flagged_emissions_output{output_suffix}.csv'
+features.to_csv(flagged_path, index=False)
+print(f"[10/12] Saved flagged emissions output to {flagged_path}.")
 
 # Read anomaly threshold from environment variable
 # anomaly_threshold_env = os.environ.get('ANOMALY_THRESHOLD', 'auto') # This line is now redundant as it's handled above
@@ -107,7 +107,10 @@ if anomaly_threshold == 'auto':
 else:
     anom_model = train_anomaly_detector(anomaly_features_scaled, contamination=anomaly_threshold)
 features['Anomaly'] = predict_anomalies(anom_model, anomaly_features_scaled)
-features.to_csv(TABLES + f'final_output_with_anomalies{output_suffix}.csv', index=False)
+# Save anomaly output with per-submission suffix
+anomaly_path = TABLES + f'final_output_with_anomalies{output_suffix}.csv'
+features.to_csv(anomaly_path, index=False)
+print(f"[Anomaly Detection] Saved anomaly output to {anomaly_path}.")
 
 # Visualization
 plt.figure(figsize=(10, 6))
@@ -127,9 +130,15 @@ flagged_count = len(flagged)
 # Generate summary using GPT or mock
 summary_prompt = f"Generate a compliance summary for {flagged_count} flagged out of {total} records. Give 2 example facilities with their actual, predicted, and deviation."  # You can customize this prompt
 summary = gpt_summary(summary_prompt)
-with open(LOGS + 'weekly_summary.txt', 'w') as f:
+# Save summary with per-submission suffix
+summary_path = LOGS + f'weekly_summary_{submission_id}.txt' if submission_id else LOGS + 'weekly_summary.txt'
+with open(summary_path, 'w') as f:
     f.write(summary)
-# Attach summary to CSV
+print(f"[Summary] Saved summary to {summary_path}.")
+# Attach summary to CSV with per-submission suffix
+summary_csv_path = TABLES + f'final_output_with_summary{output_suffix}.csv'
 features['summary'] = summary
-features.to_csv(TABLES + f'final_output_with_summary{output_suffix}.csv', index=False)
+features.to_csv(summary_csv_path, index=False)
+print(f"[Summary] Saved summary CSV to {summary_csv_path}.")
+
 print("Pipeline complete. All outputs saved in backend/deliverables/.")

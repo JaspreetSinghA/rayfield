@@ -1,86 +1,76 @@
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Link } from "wouter";
+import { Label } from "@/components/ui/label";
+import { useLocation, Link } from "wouter";
+import { apiClient } from "@/lib/api";
 
-export const SignIn = (): JSX.Element => {
-  const formFields = [
-    { id: "username", placeholder: "Username", type: "text" },
-    { id: "password", placeholder: "Password", type: "password" },
-  ];
+export default function SignIn() {
+  const [, setLocation] = useLocation();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      await apiClient.auth.login({ email, password });
+      localStorage.setItem("is_authenticated", "true");
+      setLocation("/dashboard");
+    } catch (err: any) {
+      setError("Invalid email or password");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="bg-white w-full min-h-screen">
-      <div className="bg-white overflow-hidden w-full h-screen relative flex">
-        {/* Left side - White section with login form */}
-        <div className="w-1/2 h-full bg-white flex flex-col justify-center items-center px-16 relative">
-          <div className="w-full max-w-md">
-            <div className="mb-8 text-center">
-              <h1 className="[font-family:'Montserrat',Helvetica] font-medium text-black text-4xl mb-4">
-                Welcome Back!
-              </h1>
-              <p className="[font-family:'Montserrat',Helvetica] font-normal text-gray-600 text-base">
-                Please enter your credentials to log in
-              </p>
-            </div>
-
-            <div className="space-y-6">
+    <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-2xl text-center">
+            Sign In
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id={formFields[0].id}
-                type={formFields[0].type}
-                placeholder={formFields[0].placeholder}
-                className="w-full px-4 py-3 [font-family:'Montserrat',Helvetica] font-normal text-[#727374] text-sm rounded-xl border border-solid border-[#3d3e3e]"
+                id="email"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                autoFocus
+                placeholder="you@email.com"
               />
-              
-              <Input
-                id={formFields[1].id}
-                type={formFields[1].type}
-                placeholder={formFields[1].placeholder}
-                className="w-full px-4 py-3 [font-family:'Montserrat',Helvetica] font-normal text-[#727374] text-sm rounded-xl border border-solid border-[#3d3e3e]"
-              />
-              
-              <div className="text-left">
-                <button className="[font-family:'Montserrat',Helvetica] font-medium text-black text-sm hover:underline">
-                  Forgot password?
-                </button>
-              </div>
-              
-              <Link href="/dashboard">
-                <Button className="w-full h-12 bg-black hover:bg-black/80 rounded-xl">
-                  <span className="[font-family:'Montserrat',Helvetica] font-bold text-white text-sm">
-                    SIGN IN
-                  </span>
-                </Button>
-              </Link>
             </div>
-          </div>
-        </div>
-
-        {/* Right side - Black section with branding */}
-        <div className="w-1/2 h-full bg-black flex flex-col justify-center items-center px-16 relative">
-          <div className="text-center mb-8">
-            <h1 className="[font-family:'Montserrat',Helvetica] font-medium text-white text-5xl mb-4">
-              Rayfield Systems
-            </h1>
-          </div>
-
-          <div className="text-center mb-8">
-            <p className="[font-family:'Montserrat',Helvetica] font-medium text-white text-base">
-              New to our platform? Sign Up now.
-            </p>
-          </div>
-
-          <Link href="/signup">
-            <Button
-              variant="outline"
-              className="w-48 h-12 rounded-xl border border-solid border-white bg-transparent hover:bg-white hover:text-black transition-colors"
-            >
-              <span className="[font-family:'Montserrat',Helvetica] font-bold text-sm">
-                SIGN UP
-              </span>
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                placeholder="Your password"
+              />
+            </div>
+            {error && <div className="text-red-600 text-sm font-medium">{error}</div>}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Signing in..." : "Sign In"}
             </Button>
-          </Link>
-        </div>
-      </div>
+          </form>
+          <div className="mt-6 text-center text-sm text-gray-600">
+            Don&apos;t have an account? <Link href="/signup" className="text-blue-600 hover:underline">Sign Up</Link>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
-};
+}

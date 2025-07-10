@@ -49,7 +49,7 @@ app = FastAPI(
 # CORS middleware for frontend integration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure this properly for production
+    allow_origins=["http://localhost:5173"],  # Set to frontend dev origin for local dev
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -110,6 +110,17 @@ def init_db():
             description TEXT,
             submission_type TEXT NOT NULL,
             file_path TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Create upload_logs table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS upload_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            submission_id INTEGER,
+            csv_filename TEXT,
+            anomaly_threshold TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
@@ -404,102 +415,103 @@ async def upload_files(
 ):
     try:
         uploaded_files = []
-        
-        # Create uploads directory if it doesn't exist
+        results = []
         os.makedirs("uploads", exist_ok=True)
-        
-        # Save submission to database
-        conn = get_db()
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            INSERT INTO submissions (title, category, description, submission_type)
-            VALUES (?, ?, ?, ?)
-        ''', (title, category, description, 'file'))
-        
-        submission_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
-        
-        # Always set submission_csv_path to the first uploaded CSV
-        submission_csv_path = None
         for file in files:
+            if not file.filename.endswith('.csv'):
+                continue  # Only process CSVs
+            content = await file.read()
+            # Save submission to database
+            conn = get_db()
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO submissions (title, category, description, submission_type)
+                VALUES (?, ?, ?, ?)
+            ''', (title, category, description, 'file'))
+            submission_id = cursor.lastrowid
+            conn.commit()
+            conn.close()
+            file_path = f"uploads/{submission_id}_{file.filename}"
+            with open(file_path, "wb") as f:
+                f.write(content)
+            # Validate CSV columns
             try:
-                content = await file.read()
-                file_path = f"uploads/{submission_id}_{file.filename}"
-                with open(file_path, "wb") as f:
-                    f.write(content)
-                if file.filename.endswith('.csv') and submission_csv_path is None:
-                    import pandas as pd
-                    try:
-                        df = pd.read_csv(file_path, encoding='latin1')
-                        required_columns = [
-                            'Unit CO2 emissions (non-biogenic)',
-                            'Reporting Year'
-                        ]
-                        missing_cols = [col for col in required_columns if col not in df.columns]
-                        if missing_cols:
-                            return {
-                                "message": f"Invalid file: missing required columns: {', '.join(missing_cols)}.",
-                                "error": "Invalid file format. Please upload a file similar to emissions_by_unit.csv.",
-                                "files": uploaded_files,
-                                "submission_id": submission_id
-                            }
-                    except Exception as e:
-                        return {
-                            "message": "Failed to read uploaded CSV file.",
-                            "error": str(e),
-                            "files": uploaded_files,
-                            "submission_id": submission_id
-                        }
-                    submission_csv_path = file_path
+                df = pd.read_csv(file_path, encoding='latin1')
+                required_columns = [
+                    'Unit CO2 emissions (non-biogenic)',
+                    'Reporting Year'
+                ]
+                missing_cols = [col for col in required_columns if col not in df.columns]
+                if missing_cols:
+                    uploaded_files.append({
+                        "filename": file.filename,
+                        "size": len(content),
+                        "error": f"Missing columns: {', '.join(missing_cols)}",
+                        "submission_id": submission_id
+                    })
+                    continue
+            except Exception as e:
                 uploaded_files.append({
                     "filename": file.filename,
                     "size": len(content),
-                    "file_path": file_path
+                    "error": str(e),
+                    "submission_id": submission_id
                 })
-            except Exception as file_error:
-                print(f"File processing error: {file_error}")
-                uploaded_files.append({
-                    "filename": file.filename,
-                    "size": 0,
-                    "error": str(file_error)
-                })
-        # Orchestrate pipeline scripts
-        import subprocess
-        import sys
-        backend_dir = os.path.dirname(os.path.abspath(__file__))
-        pipeline_scripts = [
-            "csvclean.py",
-            "main_pipeline.py",
-            "yearly_regression.py",
-            "yearly_anomaly_alerts.py",
-            "excel_emissions_report.py"
-        ]
-        pipeline_logs = []
-        # Always pass env vars for per-submission processing
-        env = os.environ.copy()
-        env["ANOMALY_THRESHOLD"] = anomaly_threshold
-        env["SUBMISSION_ID"] = str(submission_id)
-        if submission_csv_path:
-            env["SUBMISSION_CSV"] = os.path.abspath(submission_csv_path)
-        else:
-            # Fallback to global file for legacy support
-            env["SUBMISSION_CSV"] = os.path.abspath("backend/emissions_by_unit.csv")
-        for script in pipeline_scripts:
-            script_path = os.path.join(backend_dir, script)
-            try:
-                result = subprocess.run([sys.executable, script_path], capture_output=True, text=True, check=True, env=env)
-                pipeline_logs.append({"script": script, "stdout": result.stdout, "stderr": result.stderr, "status": "success"})
-            except subprocess.CalledProcessError as e:
-                print(f"Pipeline error in {script}: {e.stderr}")
-                return {"message": f"Pipeline failed at {script}", "error": e.stderr, "pipeline_logs": pipeline_logs}
-
+                continue
+            # Log upload
+            conn = get_db()
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO upload_logs (submission_id, csv_filename, anomaly_threshold)
+                VALUES (?, ?, ?)
+            ''', (submission_id, file.filename, anomaly_threshold))
+            conn.commit()
+            conn.close()
+            # Run pipeline
+            import subprocess
+            import sys
+            backend_dir = os.path.dirname(os.path.abspath(__file__))
+            pipeline_scripts = [
+                "csvclean.py",
+                "main_pipeline.py",
+                "yearly_regression.py",
+                "yearly_anomaly_alerts.py",
+                "excel_emissions_report.py"
+            ]
+            pipeline_logs = []
+            env = os.environ.copy()
+            env["ANOMALY_THRESHOLD"] = anomaly_threshold
+            env["SUBMISSION_ID"] = str(submission_id)
+            env["SUBMISSION_CSV"] = os.path.abspath(file_path)
+            for script in pipeline_scripts:
+                script_path = os.path.join(backend_dir, script)
+                try:
+                    result = subprocess.run([sys.executable, script_path], capture_output=True, text=True, check=True, env=env)
+                    pipeline_logs.append({"script": script, "stdout": result.stdout, "stderr": result.stderr, "status": "success"})
+                except subprocess.CalledProcessError as e:
+                    pipeline_logs.append({"script": script, "stdout": e.stdout, "stderr": e.stderr, "status": "error"})
+                    uploaded_files.append({
+                        "filename": file.filename,
+                        "size": len(content),
+                        "error": f"Pipeline failed at {script}: {e.stderr}",
+                        "submission_id": submission_id
+                    })
+                    break
+            uploaded_files.append({
+                "filename": file.filename,
+                "size": len(content),
+                "file_path": file_path,
+                "submission_id": submission_id,
+                "pipeline_logs": pipeline_logs
+            })
+            results.append({
+                "submission_id": submission_id,
+                "filename": file.filename
+            })
         return {
-            "message": "Files uploaded and pipeline processed successfully",
+            "message": "Files uploaded and processed.",
             "files": uploaded_files,
-            "submission_id": submission_id,
-            "pipeline_logs": pipeline_logs
+            "results": results
         }
     except Exception as e:
         print(f"Upload error: {e}")
@@ -613,11 +625,20 @@ async def get_submission_results(
     chart_path = os.path.join(results_dir, f'features_{submission_id}.csv')
     # Fallback to global files if per-submission files are missing
     if not os.path.exists(anomalies_path):
+        print(f"[DEBUG] Per-submission anomalies file not found: {anomalies_path}, falling back to global file.")
         anomalies_path = os.path.join(results_dir, 'final_output_with_anomalies.csv')
+    else:
+        print(f"[DEBUG] Using per-submission anomalies file: {anomalies_path}")
     if not os.path.exists(summary_path):
+        print(f"[DEBUG] Per-submission summary file not found: {summary_path}, falling back to global file.")
         summary_path = os.path.join(summary_dir, 'weekly_summary.txt')
+    else:
+        print(f"[DEBUG] Using per-submission summary file: {summary_path}")
     if not os.path.exists(chart_path):
+        print(f"[DEBUG] Per-submission chart file not found: {chart_path}, falling back to global file.")
         chart_path = os.path.join(results_dir, 'features.csv')
+    else:
+        print(f"[DEBUG] Using per-submission chart file: {chart_path}")
     start_time = time.time()
     try:
         anomalies_data = []
@@ -724,6 +745,23 @@ async def get_submission_history(current_user: dict = Depends(get_current_user))
             "file_path": row[5],
         })
     return history
+
+@app.get("/api/upload/logs")
+async def get_upload_logs(current_user: dict = Depends(get_current_user)):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('SELECT submission_id, csv_filename, anomaly_threshold, created_at FROM upload_logs ORDER BY created_at DESC')
+    logs = cursor.fetchall()
+    conn.close()
+    return [
+        {
+            "submission_id": row[0],
+            "csv_filename": row[1],
+            "anomaly_threshold": row[2],
+            "created_at": row[3],
+        }
+        for row in logs
+    ]
 
 # Serve static files for frontend
 @app.get("/static/{path:path}")

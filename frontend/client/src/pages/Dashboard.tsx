@@ -1,9 +1,13 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { apiClient } from "@/lib/api";
 
 export const Dashboard = (): JSX.Element => {
+  const isAuthenticated = Boolean(localStorage.getItem("is_authenticated"));
+  const [, setLocation] = useLocation();
+
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col">
       {/* Navigation Header */}
@@ -21,11 +25,23 @@ export const Dashboard = (): JSX.Element => {
               </span>
             </div>
             <div className="flex items-center space-x-4">
-              <Link href="/">
-                <Button variant="outline" className="[font-family:'Montserrat',Helvetica] font-medium">
+              {isAuthenticated ? (
+                <Button
+                  variant="outline"
+                  className="[font-family:'Montserrat',Helvetica] font-medium"
+                  onClick={async () => {
+                    await apiClient.auth.logout();
+                    localStorage.removeItem("is_authenticated");
+                    setLocation("/signin");
+                  }}
+                >
                   Sign Out
                 </Button>
-              </Link>
+              ) : (
+                <Link href="/signin">
+                  <Button variant="outline" className="[font-family:'Montserrat',Helvetica] font-medium">Sign In</Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -148,6 +164,24 @@ export const Dashboard = (): JSX.Element => {
                 <Link href="/get-help">
                   <Button className="w-full h-12 bg-black hover:bg-black/80 [font-family:'Montserrat',Helvetica] font-medium text-base border-2 border-black">
                     Get Help
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2 border-gray-300 shadow-md hover:shadow-lg transition-shadow aspect-square bg-white">
+              <CardHeader className="pb-4 border-b border-gray-200">
+                <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl">
+                  Upload Log
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col justify-between h-full p-6">
+                <p className="[font-family:'Montserrat',Helvetica] font-normal text-base text-gray-600 mb-6">
+                  View a log of all uploaded CSVs, anomaly thresholds, and upload dates.
+                </p>
+                <Link href="/upload-log">
+                  <Button className="w-full h-12 bg-black hover:bg-black/80 [font-family:'Montserrat',Helvetica] font-medium text-base border-2 border-black">
+                    View Upload Log
                   </Button>
                 </Link>
               </CardContent>

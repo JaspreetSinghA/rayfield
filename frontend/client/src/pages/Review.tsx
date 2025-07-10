@@ -7,6 +7,18 @@ import { Link, useLocation } from "wouter";
 import { Eye, Edit, Send, ArrowLeft, FileText, Upload, Calendar, User, AlertTriangle, BarChart3, TrendingUp, Clock, CheckCircle } from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { EnergyChart } from "@/components/ui/chart";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+ChartJS.register(LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 interface AnomalyData {
   id: number;
@@ -18,7 +30,7 @@ interface AnomalyData {
 }
 
 interface ChartData {
-  labels: number[];
+  labels: (string | number)[];
   emissions: number[];
   anomaly_indices: number[];
 }
@@ -33,11 +45,24 @@ interface ProcessingResults {
   chart_data: ChartData;
 }
 
+interface Anomaly {
+  facility: string;
+  year: number | string;
+  emission_value: number;
+  severity: string;
+  [key: string]: any;
+}
+
 export const Review = (): JSX.Element => {
   const [location, setLocation] = useLocation();
   const [results, setResults] = useState<ProcessingResults | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedAnomaly, setSelectedAnomaly] = useState<AnomalyData | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [chartData, setChartData] = useState<ChartData | null>(null);
+  const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
+  const [hoveredAnomaly, setHoveredAnomaly] = useState<Anomaly | null>(null);
 
   // Extract submission_id from URL query params
   console.log('Current location:', location);
@@ -63,6 +88,8 @@ export const Review = (): JSX.Element => {
       // Fetch real results from the backend
       const response = await apiClient.request(`/api/submissions/${submissionId}/results`) as ProcessingResults;
       setResults(response);
+      setChartData(response.chart_data);
+      setAnomalies(response.anomalies_data);
       
     } catch (err) {
       console.error('Failed to fetch results:', err);
@@ -92,6 +119,8 @@ export const Review = (): JSX.Element => {
       };
       
       setResults(mockResults);
+      setChartData(mockResults.chart_data);
+      setAnomalies(mockResults.anomalies_data);
     } finally {
       setLoading(false);
     }
@@ -304,11 +333,62 @@ export const Review = (): JSX.Element => {
             </Card>
 
             {/* Energy Emissions Chart */}
-            <EnergyChart 
-              data={results.chart_data}
-              title="Energy Emissions Over Time"
-              height={300}
-            />
+            <Card>
+              <CardContent>
+                {chartData && (
+                  <div style={{ position: 'relative', height: 400 }}>
+                    <Line
+                      data={{
+                        labels: chartData.labels,
+                        datasets: [
+                          {
+                            label: 'CO2 Emissions',
+                            data: chartData.emissions,
+                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37,99,235,0.1)',
+                            pointRadius: chartData.labels.map((_: string | number, i: number) => chartData.anomaly_indices.includes(i) ? 7 : 3),
+                            pointBackgroundColor: chartData.labels.map((_: string | number, i: number) => chartData.anomaly_indices.includes(i) ? 'red' : '#2563eb'),
+                            pointHoverRadius: 10,
+                          },
+                        ],
+                      }}
+                      options={{
+                        responsive: true,
+                        plugins: {
+                          legend: { display: false },
+                          tooltip: {
+                            enabled: true,
+                            callbacks: {
+                              label: function(context: any) {
+                                const idx = context.dataIndex;
+                                const isAnomaly = chartData.anomaly_indices.includes(idx);
+                                if (isAnomaly) {
+                                  const anomaly = anomalies.find(a => a.year === chartData.labels[idx]);
+                                  if (anomaly) {
+                                    return [
+                                      `Facility: ${anomaly.facility}`,
+                                      `Year: ${anomaly.year}`,
+                                      `Emissions: ${anomaly.emission_value}`,
+                                      `Severity: ${anomaly.severity}`,
+                                      `Deviation: ${anomaly["Deviation (%)"]}`
+                                    ];
+                                  }
+                                }
+                                return `Emissions: ${context.parsed.y}`;
+                              }
+                            }
+                          }
+                        },
+                        scales: {
+                          x: { title: { display: true, text: 'Year' } },
+                          y: { title: { display: true, text: 'CO2 Emissions (metric tons)' } }
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Detected Anomalies */}
             <Card>
@@ -345,6 +425,7 @@ export const Review = (): JSX.Element => {
                           variant="outline"
                           size="sm"
                           className="[font-family:'Montserrat',Helvetica] font-medium"
+                          onClick={() => { setSelectedAnomaly(anomaly); setModalOpen(true); }}
                         >
                           <Eye size={16} className="mr-2" />
                           View Details
@@ -353,6 +434,28 @@ export const Review = (): JSX.Element => {
                     </div>
                   ))}
                 </div>
+                {/* Modal for anomaly details */}
+                <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+                  <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto mx-auto">
+                    <DialogHeader>
+                      <DialogTitle> Anomaly Details </DialogTitle>
+                    </DialogHeader>
+                    {selectedAnomaly && (
+                      <div className="space-y-2">
+                        <div><b>Facility:</b> {selectedAnomaly.facility}</div>
+                        <div><b>Year:</b> {selectedAnomaly.year}</div>
+                        <div><b>Actual Emissions:</b> {selectedAnomaly.emission_value}</div>
+                        <div><b>Severity:</b> {selectedAnomaly.severity}</div>
+                        <div><b>Timestamp:</b> {new Date(selectedAnomaly.timestamp).toLocaleString()}</div>
+                        {Object.entries(selectedAnomaly).map(([k, v]) => (
+                          ["id", "facility", "year", "emission_value", "severity", "timestamp"].includes(k) ? null : (
+                            <div key={k}><b>{k.replace(/_/g, ' ')}:</b> {String(v)}</div>
+                          )
+                        ))}
+                      </div>
+                    )}
+                  </DialogContent>
+                </Dialog>
               </CardContent>
             </Card>
 

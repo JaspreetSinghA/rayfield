@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load cleaned data
-df_clean = pd.read_csv('cleaned_emissions_by_unit.csv')
+df_clean = pd.read_csv('deliverables/tables/cleaned_emissions_by_unit.csv')
 
 # Look at basic statistics
 print(df_clean.describe())

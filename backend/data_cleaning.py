@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Load with correct encoding
-df = pd.read_csv('emissions_by_unit.csv', encoding='latin1')
+df = pd.read_csv('deliverables/tables/emissions_by_unit.csv', encoding='latin1')
 
 # Drop rows with any missing values
 df_clean = df.dropna()
@@ -15,4 +15,5 @@ print(df_clean.isnull().sum())
 
 # Preview cleaned data
 print(df_clean.head())
-df_clean.to_csv('cleaned_emissions_by_unit.csv', index=False) 
+
+df_clean.to_csv('deliverables/tables/cleaned_emissions_by_unit.csv', index=False) 

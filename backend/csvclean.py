@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Load with correct encoding
-df = pd.read_csv('emissions_by_unit.csv', encoding='latin1')
+df = pd.read_csv('deliverables/tables/emissions_by_unit.csv', encoding='latin1')
 
 # Preview first rows
 df.head() 
@@ -18,7 +18,7 @@ print(df_clean.isnull().sum())
 
 # Preview cleaned data
 df_clean.head()
-df_clean.to_csv('cleaned_emissions_by_unit.csv', index=False)
+df_clean.to_csv('deliverables/tables/cleaned_emissions_by_unit.csv', index=False)
 
 
 #Generate
@@ -97,7 +97,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 import numpy as np
-df = pd.read_csv("cleaned_emissions_by_unit.csv")
+df = pd.read_csv("deliverables/tables/cleaned_emissions_by_unit.csv")
 df.head()
 
 from sklearn.linear_model import LinearRegression
@@ -132,12 +132,12 @@ print(df[['Facility Id', 'Reporting Year', 'Unit CO2 emissions (non-biogenic) ',
           'Predicted CO2', 'Deviation (%)', 'Flagged']].head(10))
 
 # Step 7: Save output for Day 4
-df.to_csv("flagged_emissions_output.csv", index=False)
+df.to_csv("deliverables/tables/flagged_emissions_output.csv", index=False)
 
 import pandas as pd
 
 # Load the output file from Task 2.3
-df_flagged = pd.read_csv("flagged_emissions_output.csv")
+df_flagged = pd.read_csv("deliverables/tables/flagged_emissions_output.csv")
 
 # Filter for flagged records only
 flagged = df_flagged[df_flagged['Flagged'] == 'Yes']
@@ -174,8 +174,8 @@ This summary supports audit readiness by highlighting key anomalies.
 
 summary = generate_mock_summary(df_flagged)
 print(summary)
-with open("weekly_summary.txt", "w") as f:
+with open("deliverables/tables/weekly_summary.txt", "w") as f:
     f.write(summary)
 
 df_flagged['summary'] = summary
-df_flagged.to_csv("final_output_with_summary.csv", index=False)
+df_flagged.to_csv("deliverables/tables/final_output_with_summary.csv", index=False)

@@ -3,7 +3,9 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 
 # Load cleaned data
-df = pd.read_csv("cleaned_emissions_by_unit.csv")
+# Updated path
+
+df = pd.read_csv("deliverables/tables/cleaned_emissions_by_unit.csv")
 
 # Prepare features and target
 df['Reporting Year'] = df['Reporting Year'].astype(int)
@@ -32,4 +34,5 @@ print(df[['Facility Id', 'Reporting Year', 'Unit CO2 emissions (non-biogenic) ',
           'Predicted CO2', 'Deviation (%)', 'Flagged']].head(10))
 
 # Save output for Day 4
-df.to_csv("flagged_emissions_output.csv", index=False) 
+# Updated path
+df.to_csv("deliverables/tables/flagged_emissions_output.csv", index=False) 

@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import joblib
 from ai_module import add_features, train_regression, predict, tune_regression, train_anomaly_detector, predict_anomalies, gpt_summary
 import numpy as np
+from sklearn.preprocessing import StandardScaler
 
 # Ensure deliverables folder exists
 os.makedirs('backend/deliverables', exist_ok=True)
@@ -53,6 +54,15 @@ features['Flagged'] = features['Deviation (%)'].apply(lambda x: 'Yes' if abs(x) 
 features.to_csv(TABLES + 'flagged_emissions_output.csv', index=False)
 print("[10/12] Saved flagged emissions output.")
 
+# Improved Anomaly detection with scaling and more features
+anomaly_features = features[['Unit CO2 emissions (non-biogenic) ', 'rolling_7d', 'pct_change']]
+scaler = StandardScaler()
+anomaly_features_scaled = scaler.fit_transform(anomaly_features)
+from ai_module import train_anomaly_detector, predict_anomalies
+anom_model = train_anomaly_detector(anomaly_features_scaled)
+features['Anomaly'] = predict_anomalies(anom_model, anomaly_features_scaled)
+features.to_csv(TABLES + 'final_output_with_anomalies.csv', index=False)
+
 # Visualization
 plt.figure(figsize=(10, 6))
 features.groupby('Reporting Year')['Unit CO2 emissions (non-biogenic) '].sum().plot(kind='line', marker='o')
@@ -63,11 +73,6 @@ plt.grid(True)
 plt.savefig(PLOTS + 'co2_emissions_over_time.png')
 plt.close()
 print("[11/12] Saved CO2 emissions over time plot.")
-
-# Anomaly detection (optional)
-anom_model = train_anomaly_detector(X_train)
-features['Anomaly'] = predict_anomalies(anom_model, X)
-features.to_csv(TABLES + 'final_output_with_anomalies.csv', index=False)
 
 # Generate mock summary
 flagged = features[features['Flagged'] == 'Yes']

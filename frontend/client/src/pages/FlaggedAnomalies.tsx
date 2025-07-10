@@ -5,68 +5,50 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { AlertTriangle, Eye, X, RefreshCw, Download, Filter } from "lucide-react";
 import { apiClient } from "@/lib/api";
+import { Input } from "@/components/ui/input";
 
-interface Anomaly {
+// Add new interface for real anomaly data
+interface RealAnomaly {
   id: number;
-  title: string;
+  facility: string;
+  year: number | string;
+  emission_value: number;
   severity: string;
   timestamp: string;
-  description: string;
-  status: string;
+  [key: string]: any; // Allow dynamic fields for extra CSV columns
 }
 
 export const FlaggedAnomalies = (): JSX.Element => {
-  const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
+  const [anomalies, setAnomalies] = useState<RealAnomaly[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedAnomaly, setSelectedAnomaly] = useState<RealAnomaly | null>(null);
+  // Add back filter state and UI
   const [filter, setFilter] = useState<string>("all");
+  const [search, setSearch] = useState<string>("");
+  const [date, setDate] = useState<string>("");
+
+  // Compute counts for summary cards
+  const highCount = anomalies.filter(a => a.severity === "High").length;
+  const mediumCount = anomalies.filter(a => a.severity === "Medium").length;
+  const lowCount = anomalies.filter(a => a.severity === "Low").length;
 
   useEffect(() => {
     fetchAnomalies();
   }, []);
 
+  // Fetch from improved backend endpoint
   const fetchAnomalies = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      const response = await apiClient.anomalies.getAll() as Anomaly[];
-      setAnomalies(response);
+      // Use a default submission_id for now (could be dynamic)
+      const res = await apiClient.request<any>(
+        '/api/submissions/1/results' // TODO: Replace 1 with actual submission_id if needed
+      );
+      setAnomalies(res.anomalies_data || []);
     } catch (err) {
-      console.error('Failed to fetch anomalies:', err);
-      // Fallback to mock data if API fails
-      setAnomalies([
-        {
-          id: 1,
-          title: "Energy Anomaly - Power Plant Alpha",
-          severity: "High",
-          timestamp: "2025-01-08 21:15:32",
-          description: "Anomalous emission value: 2450.67 at Power Plant Alpha in 2024",
-          status: "Active"
-        },
-        {
-          id: 2,
-          title: "Energy Anomaly - Energy Station Beta",
-          severity: "Medium",
-          timestamp: "2025-01-08 20:42:18",
-          description: "Anomalous emission value: 1890.23 at Energy Station Beta in 2024",
-          status: "Under Review"
-        },
-        {
-          id: 3,
-          title: "Energy Anomaly - Industrial Complex Gamma",
-          severity: "High",
-          timestamp: "2025-01-08 19:28:47",
-          description: "Anomalous emission value: 3200.45 at Industrial Complex Gamma in 2024",
-          status: "Active"
-        },
-        {
-          id: 4,
-          title: "Unusual Traffic Pattern",
-          severity: "Low",
-          timestamp: "2025-01-08 18:15:22",
-          description: "Detected abnormal network traffic from IP 192.168.1.45",
-          status: "Active"
-        }
-      ]);
+      setError('Failed to fetch anomalies');
     } finally {
       setLoading(false);
     }
@@ -103,23 +85,19 @@ export const FlaggedAnomalies = (): JSX.Element => {
     }
   };
 
+  // Filtering logic for severity, search, and date
   const filteredAnomalies = anomalies.filter(anomaly => {
-    if (filter === "all") return true;
-    if (filter === "high") return anomaly.severity === "High";
-    if (filter === "active") return anomaly.status === "Active";
+    if (filter !== "all" && anomaly.severity !== filter.charAt(0).toUpperCase() + filter.slice(1)) return false;
+    if (search && !anomaly.facility?.toLowerCase().includes(search.toLowerCase())) return false;
+    if (date && String(anomaly.year) !== date) return false;
     return true;
   });
 
-  const highPriorityCount = anomalies.filter(a => a.severity === "High").length;
-  const mediumPriorityCount = anomalies.filter(a => a.severity === "Medium").length;
-  const lowPriorityCount = anomalies.filter(a => a.severity === "Low").length;
-  const activeCount = anomalies.filter(a => a.status === "Active").length;
-
   const exportAnomalies = () => {
     const csvContent = [
-      "ID,Title,Severity,Status,Description,Timestamp",
-      ...filteredAnomalies.map(anomaly => 
-        `${anomaly.id},"${anomaly.title}",${anomaly.severity},${anomaly.status},"${anomaly.description}",${anomaly.timestamp}`
+      "ID,Facility,Year,Emission Value,Severity,Detected",
+      ...anomalies.map(anomaly => 
+        `${anomaly.id},"${anomaly.facility}",${anomaly.year},${anomaly.emission_value},${anomaly.severity},${anomaly.timestamp}`
       )
     ].join('\n');
     
@@ -183,213 +161,124 @@ export const FlaggedAnomalies = (): JSX.Element => {
       <main className="flex-1 px-6 py-8 w-full">
         <div>
           <div className="mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h1 className="[font-family:'Montserrat',Helvetica] font-medium text-3xl text-gray-900 flex items-center">
-                <AlertTriangle className="mr-3 text-yellow-600" size={32} />
-                Flagged Anomalies
-              </h1>
-              <div className="flex space-x-2">
-                <Button
-                  onClick={fetchAnomalies}
-                  variant="outline"
-                  className="[font-family:'Montserrat',Helvetica] font-medium"
-                >
-                  <RefreshCw className="mr-2" size={16} />
-                  Refresh
-                </Button>
-                <Button
-                  onClick={exportAnomalies}
-                  variant="outline"
-                  className="[font-family:'Montserrat',Helvetica] font-medium"
-                >
-                  <Download className="mr-2" size={16} />
-                  Export
-                </Button>
-              </div>
-            </div>
-            <p className="[font-family:'Montserrat',Helvetica] font-normal text-gray-600">
-              Monitor and manage system anomalies that require attention
-            </p>
-          </div>
-
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-red-100 rounded-full">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <Card>
+                <CardContent className="p-6 flex flex-col items-center">
+                  <div className="p-2 bg-red-100 rounded-full mb-2">
                     <AlertTriangle className="text-red-600" size={20} />
                   </div>
-                  <div className="ml-4">
-                    <p className="[font-family:'Montserrat',Helvetica] font-medium text-2xl text-gray-900">{highPriorityCount}</p>
-                    <p className="[font-family:'Montserrat',Helvetica] font-normal text-sm text-gray-600">High Priority</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-yellow-100 rounded-full">
+                  <p className="[font-family:'Montserrat',Helvetica] font-medium text-2xl text-gray-900">{highCount}</p>
+                  <p className="[font-family:'Montserrat',Helvetica] font-normal text-sm text-gray-600">High</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-6 flex flex-col items-center">
+                  <div className="p-2 bg-yellow-100 rounded-full mb-2">
                     <AlertTriangle className="text-yellow-600" size={20} />
                   </div>
-                  <div className="ml-4">
-                    <p className="[font-family:'Montserrat',Helvetica] font-medium text-2xl text-gray-900">{mediumPriorityCount}</p>
-                    <p className="[font-family:'Montserrat',Helvetica] font-normal text-sm text-gray-600">Medium Priority</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-green-100 rounded-full">
+                  <p className="[font-family:'Montserrat',Helvetica] font-medium text-2xl text-gray-900">{mediumCount}</p>
+                  <p className="[font-family:'Montserrat',Helvetica] font-normal text-sm text-gray-600">Medium</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-6 flex flex-col items-center">
+                  <div className="p-2 bg-green-100 rounded-full mb-2">
                     <AlertTriangle className="text-green-600" size={20} />
                   </div>
-                  <div className="ml-4">
-                    <p className="[font-family:'Montserrat',Helvetica] font-medium text-2xl text-gray-900">{lowPriorityCount}</p>
-                    <p className="[font-family:'Montserrat',Helvetica] font-normal text-sm text-gray-600">Low Priority</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-blue-100 rounded-full">
-                    <Eye className="text-blue-600" size={20} />
-                  </div>
-                  <div className="ml-4">
-                    <p className="[font-family:'Montserrat',Helvetica] font-medium text-2xl text-gray-900">{activeCount}</p>
-                    <p className="[font-family:'Montserrat',Helvetica] font-normal text-sm text-gray-600">Total Active</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Filter Controls */}
-          <Card className="mb-6">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-4">
-                <Filter className="text-gray-600" size={20} />
-                <span className="[font-family:'Montserrat',Helvetica] font-medium text-gray-900">Filter:</span>
-                <div className="flex space-x-2">
-                  <Button
-                    variant={filter === "all" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFilter("all")}
-                    className="[font-family:'Montserrat',Helvetica] font-medium"
-                  >
-                    All
-                  </Button>
-                  <Button
-                    variant={filter === "high" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFilter("high")}
-                    className="[font-family:'Montserrat',Helvetica] font-medium"
-                  >
-                    High Priority
-                  </Button>
-                  <Button
-                    variant={filter === "active" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFilter("active")}
-                    className="[font-family:'Montserrat',Helvetica] font-medium"
-                  >
-                    Active Only
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Anomalies List */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl">
-                Recent Anomalies ({filteredAnomalies.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {filteredAnomalies.length === 0 ? (
-                <div className="text-center py-8">
-                  <AlertTriangle className="mx-auto mb-4 text-gray-400" size={48} />
-                  <p className="[font-family:'Montserrat',Helvetica] font-medium text-gray-900 mb-2">
-                    No anomalies found
-                  </p>
-                  <p className="[font-family:'Montserrat',Helvetica] font-normal text-gray-600">
-                    {filter === "all" ? "No anomalies have been detected yet." : `No anomalies match the current filter.`}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {filteredAnomalies.map((anomaly) => (
-                    <div
-                      key={anomaly.id}
-                      className="flex items-center justify-between p-4 bg-white border rounded-lg hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="[font-family:'Montserrat',Helvetica] font-medium text-lg text-gray-900">
-                            {anomaly.title}
-                          </h3>
-                          <Badge className={getSeverityColor(anomaly.severity)}>
-                            {anomaly.severity}
-                          </Badge>
-                          <Badge className={getStatusColor(anomaly.status)}>
-                            {anomaly.status}
-                          </Badge>
-                        </div>
-                        <p className="[font-family:'Montserrat',Helvetica] font-normal text-sm text-gray-600 mb-1">
-                          {anomaly.description}
-                        </p>
-                        <p className="[font-family:'Montserrat',Helvetica] font-normal text-xs text-gray-500">
-                          {anomaly.timestamp}
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="[font-family:'Montserrat',Helvetica] font-medium"
-                        >
-                          <Eye size={16} className="mr-2" />
-                          View Details
-                        </Button>
-                        {anomaly.status === "Active" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => updateAnomalyStatus(anomaly.id, "Under Review")}
-                            className="[font-family:'Montserrat',Helvetica] font-medium text-yellow-600 hover:bg-yellow-50"
-                          >
-                            <X size={16} className="mr-2" />
-                            Mark Review
-                          </Button>
-                        )}
-                        {anomaly.status === "Under Review" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => updateAnomalyStatus(anomaly.id, "Resolved")}
-                            className="[font-family:'Montserrat',Helvetica] font-medium text-green-600 hover:bg-green-50"
-                          >
-                            <X size={16} className="mr-2" />
-                            Resolve
-                          </Button>
-                        )}
-                      </div>
+                  <p className="[font-family:'Montserrat',Helvetica] font-medium text-2xl text-gray-900">{lowCount}</p>
+                  <p className="[font-family:'Montserrat',Helvetica] font-normal text-sm text-gray-600">Low</p>
+                </CardContent>
+              </Card>
+            </div>
+            <div className="flex flex-col md:flex-row md:items-center md:space-x-4 mb-6 space-y-2 md:space-y-0">
+              <Input
+                placeholder="Search by facility name..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full md:w-64"
+              />
+              <Input
+                placeholder="Filter by year..."
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                className="w-full md:w-40"
+                type="number"
+                min="1900"
+                max="2100"
+              />
+            </div>
+            <div className="flex items-center space-x-4 mb-6">
+              <span className="[font-family:'Montserrat',Helvetica] font-medium text-gray-900">Filter by Severity:</span>
+              <Button variant={filter === "all" ? "default" : "outline"} size="sm" onClick={() => setFilter("all")}>All</Button>
+              <Button variant={filter === "high" ? "default" : "outline"} size="sm" onClick={() => setFilter("high")}>High</Button>
+              <Button variant={filter === "medium" ? "default" : "outline"} size="sm" onClick={() => setFilter("medium")}>Medium</Button>
+              <Button variant={filter === "low" ? "default" : "outline"} size="sm" onClick={() => setFilter("low")}>Low</Button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredAnomalies.map((anomaly) => (
+                <Card key={anomaly.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-lg">
+                        {anomaly.facility}
+                      </CardTitle>
+                      <Badge className={
+                        anomaly.severity === "High" ? "bg-red-100 text-red-800" :
+                        anomaly.severity === "Medium" ? "bg-yellow-100 text-yellow-800" :
+                        anomaly.severity === "Low" ? "bg-green-100 text-green-800" :
+                        "bg-gray-100 text-gray-800"
+                      }>{anomaly.severity}</Badge>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-2 text-gray-700">
+                      <span className="font-semibold">Emission Value:</span> {anomaly.emission_value?.toFixed(2) ?? "N/A"} units
+                    </div>
+                    <div className="mb-2 text-gray-700">
+                      <span className="font-semibold">Year:</span> {anomaly.year ?? "N/A"}
+                    </div>
+                    <div className="mb-2 text-gray-700">
+                      <span className="font-semibold">Detected:</span> {anomaly.timestamp ? new Date(anomaly.timestamp).toLocaleString() : "N/A"}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                      onClick={() => setSelectedAnomaly(anomaly)}
+                    >
+                      <Eye className="mr-2" size={16} />
+                      View Details
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
         </div>
+        {/* Details Modal/Section */}
+        {selectedAnomaly && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full relative">
+              <button
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
+                onClick={() => setSelectedAnomaly(null)}
+              >
+                <X size={20} />
+              </button>
+              <h2 className="text-2xl font-bold mb-4">Anomaly Details</h2>
+              <div className="mb-2"><b>Facility:</b> {selectedAnomaly.facility ?? "N/A"}</div>
+              <div className="mb-2"><b>Year:</b> {selectedAnomaly.year ?? "N/A"}</div>
+              <div className="mb-2"><b>Actual Emission Value:</b> {selectedAnomaly.emission_value?.toFixed(2) ?? "N/A"} units</div>
+              <div className="mb-2"><b>Predicted CO2:</b> {selectedAnomaly["Predicted CO2"]?.toFixed(2) ?? "N/A"}</div>
+              <div className="mb-2"><b>Deviation (%):</b> {selectedAnomaly["Deviation (%)"]?.toFixed(2) ?? "N/A"}</div>
+              <div className="mb-2"><b>7-day Rolling Avg:</b> {selectedAnomaly.rolling_7d?.toFixed(2) ?? "N/A"}</div>
+              <div className="mb-2"><b>Percent Change:</b> {selectedAnomaly.pct_change?.toFixed(2) ?? "N/A"}</div>
+              <div className="mb-2"><b>Flagged by ±15% Rule:</b> {selectedAnomaly.Flagged ?? "N/A"}</div>
+              <div className="mb-2"><b>Severity:</b> {selectedAnomaly.severity ?? "N/A"}</div>
+              <div className="mb-2"><b>Detected:</b> {selectedAnomaly.timestamp ? new Date(selectedAnomaly.timestamp).toLocaleString() : "N/A"}</div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

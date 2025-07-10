@@ -601,7 +601,7 @@ async def get_submission_results(
     import pandas as pd
     results_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'deliverables', 'tables')
     summary_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'deliverables', 'logs')
-    anomalies_path = os.path.join(results_dir, 'flagged_emissions_output.csv')
+    anomalies_path = os.path.join(results_dir, 'final_output_with_anomalies.csv')
     summary_path = os.path.join(summary_dir, 'weekly_summary.txt')
     chart_path = os.path.join(results_dir, 'features.csv')
     try:
@@ -611,13 +611,13 @@ async def get_submission_results(
         if os.path.exists(anomalies_path):
             df = pd.read_csv(anomalies_path)
             total_records = int(len(df))
-            # Count flagged anomalies
-            if 'Flagged' in df.columns:
-                anomalies_found = int(df['Flagged'].str.lower().eq('yes').sum())
-            # Build anomalies_data for flagged only, but limit to 100
+            # Count IsolationForest anomalies
+            if 'Anomaly' in df.columns:
+                anomalies_found = int((df['Anomaly'] == True).sum())
+            # Build anomalies_data for IsolationForest anomalies only, but limit to 100
             max_anomalies = 100
-            flagged_rows = [row for idx, row in df.iterrows() if str(row.get('Flagged', '')).lower() == 'yes']
-            for idx, row in enumerate(flagged_rows[:max_anomalies]):
+            anomaly_rows = [row for idx, row in df.iterrows() if row.get('Anomaly', False) == True]
+            for idx, row in enumerate(anomaly_rows[:max_anomalies]):
                 facility = row.get("Facility Name", "Unknown")
                 year = row.get("Reporting Year", "Unknown")
                 try:
@@ -629,14 +629,35 @@ async def get_submission_results(
                     emission_value = float(emission_value)
                 except Exception:
                     emission_value = 0.0
-                anomalies_data.append({
+                deviation = None
+                try:
+                    deviation = float(row.get("Deviation (%)", row.get("Deviation (%) ", 0)))
+                except Exception:
+                    deviation = None
+                # Assign severity based on deviation
+                if deviation is not None:
+                    if abs(deviation) >= 30:
+                        severity = "High"
+                    elif abs(deviation) >= 15:
+                        severity = "Medium"
+                    else:
+                        severity = "Low"
+                else:
+                    severity = "High"
+                # Build full anomaly dict with all columns
+                anomaly_dict = {
                     "id": int(idx),
                     "facility": str(facility),
                     "year": year,
                     "emission_value": emission_value,
-                    "severity": "High",
+                    "severity": severity,
                     "timestamp": f"{year}-01-01T00:00:00Z"
-                })
+                }
+                # Add all other columns from the row
+                for k, v in row.items():
+                    if k not in anomaly_dict:
+                        anomaly_dict[k] = v
+                anomalies_data.append(anomaly_dict)
         summary = None
         if os.path.exists(summary_path):
             with open(summary_path, 'r') as f:

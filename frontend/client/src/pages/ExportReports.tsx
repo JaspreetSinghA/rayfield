@@ -93,7 +93,7 @@ export const ExportReports = (): JSX.Element => {
               className="[font-family:'Montserrat',Helvetica] font-medium text-green-600 hover:bg-green-50"
               asChild
             >
-              <a href={report.download_url} target="_blank" rel="noopener noreferrer">
+              <a href={`${apiClient.baseURL}${report.download_url}`} target="_blank" rel="noopener noreferrer">
                 <Download size={16} className="mr-2" />
                 Download
               </a>

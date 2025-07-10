@@ -5,13 +5,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Link, useLocation } from "wouter";
-import { Upload, FileText, AlertCircle, CheckCircle } from "lucide-react";
+import { Link, useLocation, useRoute } from "wouter";
+import { Upload, FileText, AlertCircle, CheckCircle, Loader2, BarChart3 } from "lucide-react";
+import { apiClient } from "@/lib/api";
 
 export const UploadSubmission = (): JSX.Element => {
   const [, setLocation] = useLocation();
+  const [, params] = useRoute("/review");
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStep, setProcessingStep] = useState("");
+  const [processingResults, setProcessingResults] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    title: "",
+    category: "",
+    description: ""
+  });
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -30,14 +40,18 @@ export const UploadSubmission = (): JSX.Element => {
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const files = Array.from(e.dataTransfer.files);
-      setUploadedFiles(prev => [...prev, ...files]);
+      // Filter for CSV files only
+      const csvFiles = files.filter(file => file.type === "text/csv" || file.name.endsWith('.csv'));
+      setUploadedFiles(prev => [...prev, ...csvFiles]);
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
-      setUploadedFiles(prev => [...prev, ...files]);
+      // Filter for CSV files only
+      const csvFiles = files.filter(file => file.type === "text/csv" || file.name.endsWith('.csv'));
+      setUploadedFiles(prev => [...prev, ...csvFiles]);
     }
   };
 
@@ -45,8 +59,58 @@ export const UploadSubmission = (): JSX.Element => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = () => {
-    setLocation("/review");
+  const handleFormChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const processEnergyData = async () => {
+    if (uploadedFiles.length === 0) {
+      alert("Please upload at least one CSV file");
+      return;
+    }
+
+    setIsProcessing(true);
+    setProcessingStep("Uploading files...");
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('title', formData.title || 'Energy Data Analysis');
+      formDataToSend.append('category', formData.category || 'energy-analysis');
+      formDataToSend.append('description', formData.description || 'Energy data processing and anomaly detection');
+
+      uploadedFiles.forEach((file, index) => {
+        formDataToSend.append('files', file);
+      });
+
+      setProcessingStep("Processing data...");
+      const uploadResponse = await apiClient.upload.submitFiles(formDataToSend) as { submission_id: string, files: any[] };
+
+      setProcessingStep("Fetching results...");
+      // Fetch results using the new endpoint
+      const results = await apiClient.request(`/api/submissions/${uploadResponse.submission_id}/results`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      setProcessingResults(results);
+      setProcessingStep("Complete!");
+      
+      console.log('Upload response:', uploadResponse);
+      console.log('About to navigate to:', `/review?submission_id=${uploadResponse.submission_id}`);
+      
+      // Navigate to review page with results
+      setTimeout(() => {
+        console.log('Navigating to:', `/review?submission_id=${uploadResponse.submission_id}`);
+        window.location.href = `/review?submission_id=${uploadResponse.submission_id}`;
+      }, 2000);
+
+    } catch (error) {
+      console.error('Processing failed:', error);
+      alert('Processing failed. Please try again.');
+    } finally {
+      setIsProcessing(false);
+      setProcessingStep("");
+    }
   };
 
   return (
@@ -87,10 +151,10 @@ export const UploadSubmission = (): JSX.Element => {
           <div className="mb-8">
             <h1 className="[font-family:'Montserrat',Helvetica] font-medium text-3xl text-gray-900 mb-2 flex items-center">
               <Upload className="mr-3 text-blue-600" size={32} />
-              Upload Submission
+              Energy Data Upload & Analysis
             </h1>
             <p className="[font-family:'Montserrat',Helvetica] font-normal text-gray-600">
-              Upload documents and files for processing
+              Upload energy CSV files for automated processing and anomaly detection
             </p>
           </div>
 
@@ -99,35 +163,37 @@ export const UploadSubmission = (): JSX.Element => {
             <Card>
               <CardHeader>
                 <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl">
-                  Submission Details
+                  Analysis Details
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="title" className="[font-family:'Montserrat',Helvetica] font-medium">
-                      Submission Title
+                      Analysis Title
                     </Label>
                     <Input
                       id="title"
-                      placeholder="Enter submission title"
+                      placeholder="Enter analysis title"
                       className="[font-family:'Montserrat',Helvetica] font-normal"
+                      value={formData.title}
+                      onChange={(e) => handleFormChange('title', e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="category" className="[font-family:'Montserrat',Helvetica] font-medium">
-                      Category
+                      Data Type
                     </Label>
-                    <Select>
+                    <Select value={formData.category} onValueChange={(value) => handleFormChange('category', value)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
+                        <SelectValue placeholder="Select data type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="report">Report</SelectItem>
-                        <SelectItem value="analysis">Analysis</SelectItem>
-                        <SelectItem value="documentation">Documentation</SelectItem>
-                        <SelectItem value="data">Data Files</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                        <SelectItem value="emissions">CO2 Emissions</SelectItem>
+                        <SelectItem value="energy-consumption">Energy Consumption</SelectItem>
+                        <SelectItem value="fuel-usage">Fuel Usage</SelectItem>
+                        <SelectItem value="power-generation">Power Generation</SelectItem>
+                        <SelectItem value="other">Other Energy Data</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -138,8 +204,10 @@ export const UploadSubmission = (): JSX.Element => {
                   </Label>
                   <Textarea
                     id="description"
-                    placeholder="Describe your submission..."
+                    placeholder="Describe your energy data and analysis requirements..."
                     className="[font-family:'Montserrat',Helvetica] font-normal min-h-[100px]"
+                    value={formData.description}
+                    onChange={(e) => handleFormChange('description', e.target.value)}
                   />
                 </div>
               </CardContent>
@@ -148,8 +216,9 @@ export const UploadSubmission = (): JSX.Element => {
             {/* File Upload */}
             <Card>
               <CardHeader>
-                <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl">
-                  File Upload
+                <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl flex items-center">
+                  <BarChart3 className="mr-2" size={20} />
+                  Energy Data Files (CSV Only)
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -166,14 +235,15 @@ export const UploadSubmission = (): JSX.Element => {
                 >
                   <Upload className="mx-auto mb-4 text-gray-400" size={48} />
                   <p className="[font-family:'Montserrat',Helvetica] font-medium text-lg text-gray-900 mb-2">
-                    Drag and drop files here
+                    Drag and drop CSV files here
                   </p>
                   <p className="[font-family:'Montserrat',Helvetica] font-normal text-sm text-gray-600 mb-4">
-                    or click to select files
+                    Only CSV files containing energy data are accepted
                   </p>
                   <Input
                     type="file"
                     multiple
+                    accept=".csv"
                     onChange={handleFileChange}
                     className="hidden"
                     id="fileUpload"
@@ -184,7 +254,7 @@ export const UploadSubmission = (): JSX.Element => {
                       className="[font-family:'Montserrat',Helvetica] font-medium"
                       asChild
                     >
-                      <span>Choose Files</span>
+                      <span>Choose CSV Files</span>
                     </Button>
                   </Label>
                 </div>
@@ -193,7 +263,7 @@ export const UploadSubmission = (): JSX.Element => {
                 {uploadedFiles.length > 0 && (
                   <div className="mt-6 space-y-3">
                     <h3 className="[font-family:'Montserrat',Helvetica] font-medium text-lg text-gray-900">
-                      Uploaded Files
+                      Uploaded Energy Data Files
                     </h3>
                     {uploadedFiles.map((file, index) => (
                       <div
@@ -226,6 +296,31 @@ export const UploadSubmission = (): JSX.Element => {
               </CardContent>
             </Card>
 
+            {/* Processing Status */}
+            {isProcessing && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl flex items-center">
+                    <Loader2 className="mr-2 animate-spin" size={20} />
+                    Processing Energy Data
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-3">
+                      <Loader2 className="animate-spin text-blue-600" size={20} />
+                      <span className="[font-family:'Montserrat',Helvetica] font-medium text-gray-900">
+                        {processingStep}
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Action Buttons */}
             <div className="flex justify-between">
               <div className="flex space-x-4">
@@ -242,14 +337,26 @@ export const UploadSubmission = (): JSX.Element => {
                 <Button
                   variant="outline"
                   className="[font-family:'Montserrat',Helvetica] font-medium"
+                  disabled={isProcessing}
                 >
                   Save as Draft
                 </Button>
                 <Button
-                  onClick={handleSubmit}
+                  onClick={processEnergyData}
+                  disabled={isProcessing || uploadedFiles.length === 0}
                   className="bg-black hover:bg-black/80 [font-family:'Montserrat',Helvetica] font-medium"
                 >
-                  Continue to Review
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="mr-2 animate-spin" size={16} />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <BarChart3 className="mr-2" size={16} />
+                      Process & Analyze
+                    </>
+                  )}
                 </Button>
               </div>
             </div>

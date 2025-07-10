@@ -18,6 +18,7 @@ try:
     from emissions_model import EmissionsModel
     from data_analysis import DataAnalyzer
     from ai_module import AIProcessor
+    from summary_generator import EnergySummaryGenerator
 except ImportError:
     # Mock classes for development
     class EmissionsModel:
@@ -33,6 +34,10 @@ except ImportError:
     class AIProcessor:
         def process_text(self, text):
             return {"sentiment": "positive", "keywords": ["mock", "data"]}
+    
+    class EnergySummaryGenerator:
+        def generate_summary(self, results):
+            return f"Analysis completed for {results.get('total_records', 0)} records. Found {results.get('anomalies_found', 0)} anomalies."
 
 app = FastAPI(
     title="Rayfield Systems API",
@@ -56,6 +61,7 @@ security = HTTPBearer(auto_error=False)
 emissions_model = EmissionsModel()
 data_analyzer = DataAnalyzer()
 ai_processor = AIProcessor()
+summary_generator = EnergySummaryGenerator()
 
 # SQLite database setup
 DATABASE_URL = "sqlite:///./rayfield.db"
@@ -156,6 +162,19 @@ class ReportRequest(BaseModel):
     end_date: Optional[str] = None
     report_type: str
 
+class EnergyDataProcessRequest(BaseModel):
+    submission_id: str
+    files: List[str]
+
+class EnergyDataResponse(BaseModel):
+    submission_id: str
+    anomalies_found: int
+    total_records: int
+    processing_time: float
+    anomalies_data: List[dict]
+    summary: str
+    chart_data: dict
+
 # Authentication helper
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     # Implement proper JWT token validation here
@@ -166,6 +185,88 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 @app.get("/")
 async def root():
     return {"message": "Rayfield Systems API is running", "status": "healthy"}
+
+# Test endpoint without authentication
+@app.post("/api/upload/test")
+async def upload_files_test(
+    files: List[UploadFile] = File(...),
+    title: str = Form(...),
+    category: str = Form(...),
+    description: str = Form("")
+):
+    """Test endpoint without authentication for debugging"""
+    try:
+        uploaded_files = []
+        
+        # Create uploads directory if it doesn't exist
+        os.makedirs("uploads", exist_ok=True)
+        
+        # Save submission to database
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO submissions (title, category, description, submission_type)
+            VALUES (?, ?, ?, ?)
+        ''', (title, category, description, 'file'))
+        
+        submission_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        for file in files:
+            try:
+                # Process file with your existing modules
+                content = await file.read()
+                
+                # Save file to disk (in production, use cloud storage)
+                file_path = f"uploads/{submission_id}_{file.filename}"
+                
+                with open(file_path, "wb") as f:
+                    f.write(content)
+                
+                # Example: Process CSV files
+                if file.filename.endswith('.csv'):
+                    try:
+                        df = pd.read_csv(io.StringIO(content.decode('utf-8')))
+                        # Use your existing data analysis
+                        analysis_result = data_analyzer.analyze_data(df)
+                        uploaded_files.append({
+                            "filename": file.filename,
+                            "size": len(content),
+                            "analysis": analysis_result,
+                            "file_path": file_path
+                        })
+                    except Exception as csv_error:
+                        print(f"CSV processing error: {csv_error}")
+                        uploaded_files.append({
+                            "filename": file.filename,
+                            "size": len(content),
+                            "analysis": {"error": "CSV processing failed"},
+                            "file_path": file_path
+                        })
+                else:
+                    uploaded_files.append({
+                        "filename": file.filename,
+                        "size": len(content),
+                        "file_path": file_path
+                    })
+            except Exception as file_error:
+                print(f"File processing error: {file_error}")
+                uploaded_files.append({
+                    "filename": file.filename,
+                    "size": 0,
+                    "error": str(file_error)
+                })
+        
+        return {
+            "message": "Files uploaded successfully",
+            "files": uploaded_files,
+            "submission_id": submission_id
+        }
+    except Exception as e:
+        print(f"Upload error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Authentication endpoints
 @app.post("/api/auth/login")
@@ -302,6 +403,9 @@ async def upload_files(
     try:
         uploaded_files = []
         
+        # Create uploads directory if it doesn't exist
+        os.makedirs("uploads", exist_ok=True)
+        
         # Save submission to database
         conn = get_db()
         cursor = conn.cursor()
@@ -316,38 +420,82 @@ async def upload_files(
         conn.close()
         
         for file in files:
-            # Process file with your existing modules
-            content = await file.read()
-            
-            # Save file to disk (in production, use cloud storage)
-            file_path = f"uploads/{submission_id}_{file.filename}"
-            os.makedirs("uploads", exist_ok=True)
-            
-            with open(file_path, "wb") as f:
-                f.write(content)
-            
-            # Example: Process CSV files
-            if file.filename.endswith('.csv'):
-                df = pd.read_csv(io.StringIO(content.decode('utf-8')))
-                # Use your existing data analysis
-                analysis_result = data_analyzer.analyze_data(df)
+            try:
+                # Process file with your existing modules
+                content = await file.read()
+                
+                # Save file to disk (in production, use cloud storage)
+                file_path = f"uploads/{submission_id}_{file.filename}"
+                
+                with open(file_path, "wb") as f:
+                    f.write(content)
+                
+                # If CSV, validate before copying and running pipeline
+                if file.filename.endswith('.csv'):
+                    import shutil
+                    import pandas as pd
+                    try:
+                        df = pd.read_csv(file_path, encoding='latin1')
+                        required_columns = [
+                            'Unit CO2 emissions (non-biogenic)',
+                            'Reporting Year'
+                        ]
+                        missing_cols = [col for col in required_columns if col not in df.columns]
+                        if missing_cols:
+                            return {
+                                "message": f"Invalid file: missing required columns: {', '.join(missing_cols)}.",
+                                "error": "Invalid file format. Please upload a file similar to emissions_by_unit.csv.",
+                                "files": uploaded_files,
+                                "submission_id": submission_id
+                            }
+                    except Exception as e:
+                        return {
+                            "message": "Failed to read uploaded CSV file.",
+                            "error": str(e),
+                            "files": uploaded_files,
+                            "submission_id": submission_id
+                        }
+                    shutil.copy(file_path, "backend/emissions_by_unit.csv")
+                    tables_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'deliverables', 'tables')
+                    os.makedirs(tables_dir, exist_ok=True)
+                    shutil.copy(file_path, os.path.join(tables_dir, 'emissions_by_unit.csv'))
+            except Exception as file_error:
+                print(f"File processing error: {file_error}")
                 uploaded_files.append({
                     "filename": file.filename,
-                    "size": len(content),
-                    "analysis": analysis_result
+                    "size": 0,
+                    "error": str(file_error)
                 })
-            else:
-                uploaded_files.append({
-                    "filename": file.filename,
-                    "size": len(content)
-                })
-        
+
+        # Orchestrate pipeline scripts
+        import subprocess
+        import sys
+        backend_dir = os.path.dirname(os.path.abspath(__file__))
+        pipeline_scripts = [
+            "csvclean.py",
+            "main_pipeline.py",
+            "yearly_regression.py",
+            "yearly_anomaly_alerts.py",
+            "excel_emissions_report.py"
+        ]
+        pipeline_logs = []
+        for script in pipeline_scripts:
+            script_path = os.path.join(backend_dir, script)
+            try:
+                result = subprocess.run([sys.executable, script_path], capture_output=True, text=True, check=True)
+                pipeline_logs.append({"script": script, "stdout": result.stdout, "stderr": result.stderr, "status": "success"})
+            except subprocess.CalledProcessError as e:
+                print(f"Pipeline error in {script}: {e.stderr}")
+                return {"message": f"Pipeline failed at {script}", "error": e.stderr, "pipeline_logs": pipeline_logs}
+
         return {
-            "message": "Files uploaded successfully",
+            "message": "Files uploaded and pipeline processed successfully",
             "files": uploaded_files,
-            "submission_id": submission_id
+            "submission_id": submission_id,
+            "pipeline_logs": pipeline_logs
         }
     except Exception as e:
+        print(f"Upload error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/upload/text")
@@ -434,6 +582,92 @@ async def generate_compliance_report(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/process-energy-data")
+async def process_energy_data(
+    request: EnergyDataProcessRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    return JSONResponse(status_code=400, content={
+        "message": "This endpoint is deprecated. Results are available after upload."
+    })
+
+@app.get("/api/submissions/{submission_id}/results")
+async def get_submission_results(
+    submission_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    import os
+    import pandas as pd
+    results_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'deliverables', 'tables')
+    summary_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'deliverables', 'logs')
+    anomalies_path = os.path.join(results_dir, 'flagged_emissions_output.csv')
+    summary_path = os.path.join(summary_dir, 'weekly_summary.txt')
+    chart_path = os.path.join(results_dir, 'features.csv')
+    try:
+        anomalies_data = []
+        total_records = 0
+        anomalies_found = 0
+        if os.path.exists(anomalies_path):
+            df = pd.read_csv(anomalies_path)
+            total_records = int(len(df))
+            # Count flagged anomalies
+            if 'Flagged' in df.columns:
+                anomalies_found = int(df['Flagged'].str.lower().eq('yes').sum())
+            # Build anomalies_data for flagged only, but limit to 100
+            max_anomalies = 100
+            flagged_rows = [row for idx, row in df.iterrows() if str(row.get('Flagged', '')).lower() == 'yes']
+            for idx, row in enumerate(flagged_rows[:max_anomalies]):
+                facility = row.get("Facility Name", "Unknown")
+                year = row.get("Reporting Year", "Unknown")
+                try:
+                    year = int(year)
+                except Exception:
+                    year = str(year)
+                emission_value = row.get("Unit CO2 emissions (non-biogenic) ", row.get("Unit CO2 emissions (non-biogenic)", 0))
+                try:
+                    emission_value = float(emission_value)
+                except Exception:
+                    emission_value = 0.0
+                anomalies_data.append({
+                    "id": int(idx),
+                    "facility": str(facility),
+                    "year": year,
+                    "emission_value": emission_value,
+                    "severity": "High",
+                    "timestamp": f"{year}-01-01T00:00:00Z"
+                })
+        summary = None
+        if os.path.exists(summary_path):
+            with open(summary_path, 'r') as f:
+                summary = f.read()
+        chart_data = None
+        if os.path.exists(chart_path):
+            chart_df = pd.read_csv(chart_path)
+            labels = chart_df["Reporting Year"].tolist()[:100]
+            emissions = chart_df["Unit CO2 emissions (non-biogenic) "].tolist()[:100]
+            # Find anomaly indices: match years in anomalies_data
+            anomaly_years = set(a["year"] for a in anomalies_data)
+            anomaly_indices = [i for i, y in enumerate(labels) if y in anomaly_years]
+            chart_data = {
+                "labels": labels,
+                "emissions": emissions,
+                "anomaly_indices": anomaly_indices
+            }
+        return {
+            "submission_id": str(submission_id),
+            "anomalies_found": int(anomalies_found),
+            "total_records": int(total_records),
+            "processing_time": float(0),
+            "anomalies_data": anomalies_data,
+            "summary": summary,
+            "chart_data": chart_data
+        }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={
+            "message": "Failed to load results.",
+            "error": str(e)
+        })
 
 # Serve static files for frontend
 @app.get("/static/{path:path}")

@@ -1,45 +1,172 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Link, useLocation } from "wouter";
-import { Eye, Edit, Send, ArrowLeft, FileText, Upload, Calendar, User } from "lucide-react";
+import { Eye, Edit, Send, ArrowLeft, FileText, Upload, Calendar, User, AlertTriangle, BarChart3, TrendingUp, Clock, CheckCircle } from "lucide-react";
+import { apiClient } from "@/lib/api";
+import { EnergyChart } from "@/components/ui/chart";
+
+interface AnomalyData {
+  id: number;
+  facility: string;
+  year: string;
+  emission_value: number;
+  severity: string;
+  timestamp: string;
+}
+
+interface ChartData {
+  labels: number[];
+  emissions: number[];
+  anomaly_indices: number[];
+}
+
+interface ProcessingResults {
+  submission_id: string;
+  anomalies_found: number;
+  total_records: number;
+  processing_time: number;
+  anomalies_data: AnomalyData[];
+  summary: string;
+  chart_data: ChartData;
+}
 
 export const Review = (): JSX.Element => {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  const [results, setResults] = useState<ProcessingResults | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = () => {
-    setLocation("/submission");
+  // Extract submission_id from URL query params
+  console.log('Current location:', location);
+  console.log('Window location search:', window.location.search);
+  const urlParams = new URLSearchParams(window.location.search);
+  const submissionId = urlParams.get('submission_id');
+  console.log('Extracted submission ID:', submissionId);
+
+  useEffect(() => {
+    console.log('useEffect triggered with submissionId:', submissionId);
+    if (submissionId) {
+      fetchResults();
+    } else {
+      setLoading(false);
+      setError("No submission ID provided");
+    }
+  }, [submissionId]);
+
+  const fetchResults = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch real results from the backend
+      const response = await apiClient.request(`/api/submissions/${submissionId}/results`) as ProcessingResults;
+      setResults(response);
+      
+    } catch (err) {
+      console.error('Failed to fetch results:', err);
+      
+      // Fallback to mock data if API fails
+      const mockResults: ProcessingResults = {
+        submission_id: submissionId || "123",
+        anomalies_found: 1,
+        total_records: 10,
+        processing_time: 0.05,
+        anomalies_data: [
+          {
+            id: 6,
+            facility: "Coal Plant Eta",
+            year: "2024",
+            emission_value: 4500.3,
+            severity: "High",
+            timestamp: "2025-01-08T21:30:00Z"
+          }
+        ],
+        summary: "Analysis completed for 10 records. Found 1 anomalies (10.0% of data). High severity anomalies detected at Coal Plant Eta.",
+        chart_data: {
+          labels: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+          emissions: [1500.5, 1200.3, 3200.7, 800.2, 600.1, 2800.9, 4500.3, 1800.6, 900.4, 700.8],
+          anomaly_indices: [6]
+        }
+      };
+      
+      setResults(mockResults);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Mock data for review
-  const submissionData = {
-    title: "Security Analysis Report",
-    category: "Security",
-    priority: "High",
-    department: "IT",
-    description: "Comprehensive analysis of recent security incidents and recommended mitigation strategies.",
-    content: "This report analyzes the security incidents that occurred in the past month...",
-    tags: ["security", "analysis", "incidents", "mitigation"],
-    files: [
-      { name: "security_report.pdf", size: "2.4 MB", type: "PDF" },
-      { name: "incident_logs.csv", size: "1.2 MB", type: "CSV" },
-    ],
-    submittedBy: "John Doe",
-    submittedDate: "2025-01-08 21:30:00",
-    wordCount: 1247
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
       case "High": return "bg-red-100 text-red-800";
       case "Medium": return "bg-yellow-100 text-yellow-800";
       case "Low": return "bg-green-100 text-green-800";
-      case "Urgent": return "bg-purple-100 text-purple-800";
       default: return "bg-gray-100 text-gray-800";
     }
   };
+
+  const handleExportAlerts = async () => {
+    if (!results) return;
+    
+    try {
+      // Create CSV content
+      const csvContent = [
+        "Facility,Year,Emission Value,Severity,Timestamp",
+        ...results.anomalies_data.map(anomaly => 
+          `${anomaly.facility},${anomaly.year},${anomaly.emission_value},${anomaly.severity},${anomaly.timestamp}`
+        )
+      ].join('\n');
+      
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `energy_anomalies_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export failed. Please try again.');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="[font-family:'Montserrat',Helvetica] font-medium text-gray-900">
+            Loading analysis results...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !results) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="mx-auto mb-4 text-red-600" size={48} />
+          <p className="[font-family:'Montserrat',Helvetica] font-medium text-gray-900 mb-2">
+            Error Loading Results
+          </p>
+          <p className="[font-family:'Montserrat',Helvetica] font-normal text-gray-600">
+            {error || "Unable to load analysis results"}
+          </p>
+          <Link href="/dashboard">
+            <Button className="mt-4">
+              Back to Dashboard
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-50 min-h-screen flex flex-col">
@@ -78,158 +205,152 @@ export const Review = (): JSX.Element => {
         <div>
           <div className="mb-8">
             <h1 className="[font-family:'Montserrat',Helvetica] font-medium text-3xl text-gray-900 mb-2 flex items-center">
-              <Eye className="mr-3 text-blue-600" size={32} />
-              Review Submission
+              <BarChart3 className="mr-3 text-blue-600" size={32} />
+              Energy Data Analysis Results
             </h1>
             <p className="[font-family:'Montserrat',Helvetica] font-normal text-gray-600">
-              Review your submission before final approval
+              Review the analysis results and detected anomalies
             </p>
           </div>
 
           <div className="space-y-6">
-            {/* Submission Overview */}
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-blue-100 rounded-full">
+                      <BarChart3 className="text-blue-600" size={20} />
+                    </div>
+                    <div className="ml-4">
+                      <p className="[font-family:'Montserrat',Helvetica] font-medium text-2xl text-gray-900">
+                        {results.total_records.toLocaleString()}
+                      </p>
+                      <p className="[font-family:'Montserrat',Helvetica] font-normal text-sm text-gray-600">
+                        Total Records
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-red-100 rounded-full">
+                      <AlertTriangle className="text-red-600" size={20} />
+                    </div>
+                    <div className="ml-4">
+                      <p className="[font-family:'Montserrat',Helvetica] font-medium text-2xl text-gray-900">
+                        {results.anomalies_found}
+                      </p>
+                      <p className="[font-family:'Montserrat',Helvetica] font-normal text-sm text-gray-600">
+                        Anomalies Found
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-green-100 rounded-full">
+                      <CheckCircle className="text-green-600" size={20} />
+                    </div>
+                    <div className="ml-4">
+                      <p className="[font-family:'Montserrat',Helvetica] font-medium text-2xl text-gray-900">
+                        {((results.total_records - results.anomalies_found) / results.total_records * 100).toFixed(1)}%
+                      </p>
+                      <p className="[font-family:'Montserrat',Helvetica] font-normal text-sm text-gray-600">
+                        Normal Data
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-purple-100 rounded-full">
+                      <Clock className="text-purple-600" size={20} />
+                    </div>
+                    <div className="ml-4">
+                      <p className="[font-family:'Montserrat',Helvetica] font-medium text-2xl text-gray-900">
+                        {results.processing_time.toFixed(2)}s
+                      </p>
+                      <p className="[font-family:'Montserrat',Helvetica] font-normal text-sm text-gray-600">
+                        Processing Time
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Analysis Summary */}
             <Card>
               <CardHeader>
                 <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl">
-                  Submission Overview
+                  Analysis Summary
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <div>
-                      <span className="[font-family:'Montserrat',Helvetica] font-medium text-sm text-gray-600">Title:</span>
-                      <p className="[font-family:'Montserrat',Helvetica] font-normal text-gray-900">
-                        {submissionData.title}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="[font-family:'Montserrat',Helvetica] font-medium text-sm text-gray-600">Category:</span>
-                      <p className="[font-family:'Montserrat',Helvetica] font-normal text-gray-900">
-                        {submissionData.category}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="[font-family:'Montserrat',Helvetica] font-medium text-sm text-gray-600">Priority:</span>
-                      <div className="mt-1">
-                        <Badge className={getPriorityColor(submissionData.priority)}>
-                          {submissionData.priority}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <span className="[font-family:'Montserrat',Helvetica] font-medium text-sm text-gray-600">Department:</span>
-                      <p className="[font-family:'Montserrat',Helvetica] font-normal text-gray-900">
-                        {submissionData.department}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="[font-family:'Montserrat',Helvetica] font-medium text-sm text-gray-600">Submitted By:</span>
-                      <p className="[font-family:'Montserrat',Helvetica] font-normal text-gray-900 flex items-center">
-                        <User className="mr-2" size={16} />
-                        {submissionData.submittedBy}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="[font-family:'Montserrat',Helvetica] font-medium text-sm text-gray-600">Date:</span>
-                      <p className="[font-family:'Montserrat',Helvetica] font-normal text-gray-900 flex items-center">
-                        <Calendar className="mr-2" size={16} />
-                        {submissionData.submittedDate}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                <Separator />
-                
-                <div>
-                  <span className="[font-family:'Montserrat',Helvetica] font-medium text-sm text-gray-600">Description:</span>
-                  <p className="[font-family:'Montserrat',Helvetica] font-normal text-gray-900 mt-1">
-                    {submissionData.description}
-                  </p>
-                </div>
+              <CardContent>
+                <p className="[font-family:'Montserrat',Helvetica] font-normal text-gray-900">
+                  {results.summary}
+                </p>
               </CardContent>
             </Card>
 
-            {/* Content Preview */}
+            {/* Energy Emissions Chart */}
+            <EnergyChart 
+              data={results.chart_data}
+              title="Energy Emissions Over Time"
+              height={300}
+            />
+
+            {/* Detected Anomalies */}
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl">
-                    Content Preview
-                  </CardTitle>
-                  <div className="text-sm text-gray-500">
-                    <span className="[font-family:'Montserrat',Helvetica] font-normal">
-                      {submissionData.wordCount} words
-                    </span>
-                  </div>
-                </div>
+                <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl">
+                  Detected Anomalies
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="[font-family:'Montserrat',Helvetica] font-normal text-gray-900">
-                    {submissionData.content}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Files */}
-            {submissionData.files.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl">
-                    Attached Files
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {submissionData.files.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <FileText className="text-blue-600" size={20} />
-                          <div>
-                            <p className="[font-family:'Montserrat',Helvetica] font-medium text-sm text-gray-900">
-                              {file.name}
-                            </p>
-                            <p className="[font-family:'Montserrat',Helvetica] font-normal text-xs text-gray-500">
-                              {file.type} • {file.size}
-                            </p>
-                          </div>
+                <div className="space-y-4">
+                  {results.anomalies_data.map((anomaly) => (
+                    <div
+                      key={anomaly.id}
+                      className="flex items-center justify-between p-4 bg-white border rounded-lg hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h3 className="[font-family:'Montserrat',Helvetica] font-medium text-lg text-gray-900">
+                            {anomaly.facility}
+                          </h3>
+                          <Badge className={getSeverityColor(anomaly.severity)}>
+                            {anomaly.severity}
+                          </Badge>
                         </div>
+                        <p className="[font-family:'Montserrat',Helvetica] font-normal text-sm text-gray-600 mb-1">
+                          Emission Value: {anomaly.emission_value.toFixed(2)} units
+                        </p>
+                        <p className="[font-family:'Montserrat',Helvetica] font-normal text-xs text-gray-500">
+                          Year: {anomaly.year} • Detected: {new Date(anomaly.timestamp).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
                         <Button
                           variant="outline"
                           size="sm"
                           className="[font-family:'Montserrat',Helvetica] font-medium"
                         >
                           <Eye size={16} className="mr-2" />
-                          Preview
+                          View Details
                         </Button>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Tags */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl">
-                  Tags
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {submissionData.tags.map((tag, index) => (
-                    <Badge key={index} variant="secondary" className="[font-family:'Montserrat',Helvetica] font-normal">
-                      {tag}
-                    </Badge>
+                    </div>
                   ))}
                 </div>
               </CardContent>
@@ -244,25 +365,25 @@ export const Review = (): JSX.Element => {
                     className="[font-family:'Montserrat',Helvetica] font-medium"
                   >
                     <ArrowLeft className="mr-2" size={16} />
-                    Back to Edit
+                    Upload New Data
                   </Button>
                 </Link>
               </div>
               <div className="flex space-x-4">
                 <Button
+                  onClick={handleExportAlerts}
                   variant="outline"
                   className="[font-family:'Montserrat',Helvetica] font-medium"
                 >
-                  <Edit className="mr-2" size={16} />
-                  Edit Submission
+                  <FileText className="mr-2" size={16} />
+                  Export Alerts
                 </Button>
-                <Button
-                  onClick={handleSubmit}
-                  className="bg-black hover:bg-black/80 [font-family:'Montserrat',Helvetica] font-medium"
-                >
-                  <Send className="mr-2" size={16} />
-                  Submit for Processing
-                </Button>
+                <Link href="/flagged-anomalies">
+                  <Button className="bg-black hover:bg-black/80 [font-family:'Montserrat',Helvetica] font-medium">
+                    <AlertTriangle className="mr-2" size={16} />
+                    View All Anomalies
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>

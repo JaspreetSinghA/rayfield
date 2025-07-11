@@ -4,4 +4,11 @@ xlsxwriter
 matplotlib
 python-dotenv
 openai
-requests 
+requests
+fastapi
+uvicorn
+scikit-learn
+numpy
+joblib
+pydantic
+python-multipart 

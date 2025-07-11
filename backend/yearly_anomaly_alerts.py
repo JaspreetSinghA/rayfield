@@ -1,12 +1,32 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
+import os
+
+# Get submission ID from environment
+submission_id = os.environ.get('SUBMISSION_ID', None)
+if submission_id:
+    output_suffix = f'_{submission_id}'
+else:
+    output_suffix = ''
 
 # Load and clean
-TABLES = 'backend/deliverables/tables/'
-PLOTS = 'backend/deliverables/plots/'
-LOGS = 'backend/deliverables/logs/'
-df = pd.read_csv(TABLES + 'flagged_emissions_output.csv', encoding='latin1')
+TABLES = 'deliverables/tables/'
+PLOTS = 'deliverables/plots/'
+LOGS = 'deliverables/logs/'
+
+# Ensure directories exist
+os.makedirs(TABLES, exist_ok=True)
+os.makedirs(PLOTS, exist_ok=True)
+os.makedirs(LOGS, exist_ok=True)
+
+# Use submission-specific file path
+flagged_file = TABLES + f'flagged_emissions_output{output_suffix}.csv'
+if not os.path.exists(flagged_file):
+    print(f"Warning: {flagged_file} not found, trying fallback...")
+    flagged_file = TABLES + 'flagged_emissions_output.csv'
+
+df = pd.read_csv(flagged_file, encoding='latin1')
 df.columns = df.columns.str.strip()
 df["year_index"] = df["Reporting Year"] - df["Reporting Year"].min()
 min_year = df["Reporting Year"].min()
@@ -39,8 +59,8 @@ anomalies = anomalies.rename(columns={
 anomalies["Reporting Year"] = anomalies["index"] + min_year
 anomalies["Reporting Year"] = anomalies["Reporting Year"].astype(int)
 
-# Save anomalies to CSV
-anomalies.to_csv(TABLES + 'alerts_today.csv', index=False)
+# Save anomalies to CSV with submission suffix
+anomalies.to_csv(TABLES + f'alerts_today{output_suffix}.csv', index=False)
 
 # Generate summary text
 def generate_summary(df):
@@ -53,11 +73,11 @@ def generate_summary(df):
 
 summary = generate_summary(anomalies)
 
-# Save summary to text file
-with open(LOGS + 'weekly_summary_anomalies.txt', 'w') as f:
+# Save summary to text file with submission suffix
+with open(LOGS + f'weekly_summary_anomalies{output_suffix}.txt', 'w') as f:
     f.write(summary)
 
-print("✅ alerts_today.csv and weekly_summary_anomalies.txt created!")
+print(f"✅ alerts_today{output_suffix}.csv and weekly_summary_anomalies{output_suffix}.txt created!")
 
 # Plot actual, predicted, and anomalies
 plt.figure(figsize=(10, 5))
@@ -74,5 +94,5 @@ plt.ylabel("Average CO2 Emissions")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
-plt.savefig(PLOTS + 'yearly_anomaly_detection.png')
-plt.show() 
+plt.savefig(PLOTS + f'yearly_anomaly_detection{output_suffix}.png')
+plt.close() 

@@ -27,6 +27,7 @@ interface AnomalyData {
   emission_value: number;
   severity: string;
   timestamp: string;
+  explanation?: string;
 }
 
 interface ChartData {
@@ -53,6 +54,28 @@ interface Anomaly {
   [key: string]: any;
 }
 
+// Add new types for thresholds and feedback
+interface Thresholds {
+  anomaly: string | number;
+  flagged: string | number;
+}
+
+interface AnomalyFeedback {
+  status: string; // e.g., 'false_positive', 'resolved', etc.
+  notes?: string;
+}
+
+// Extend AnomalyData to include explanation
+interface AnomalyData {
+  id: number;
+  facility: string;
+  year: string;
+  emission_value: number;
+  severity: string;
+  timestamp: string;
+  explanation?: string;
+}
+
 export const Review = (): JSX.Element => {
   const [location, setLocation] = useLocation();
   const [results, setResults] = useState<ProcessingResults | null>(null);
@@ -63,6 +86,10 @@ export const Review = (): JSX.Element => {
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
   const [hoveredAnomaly, setHoveredAnomaly] = useState<Anomaly | null>(null);
+  const [thresholds, setThresholds] = useState<Thresholds>({ anomaly: "auto", flagged: 15 });
+  const [metrics, setMetrics] = useState<{ r2?: number; rmse?: number }>({});
+  const [anomalyWarning, setAnomalyWarning] = useState<string>("");
+  const [feedbacks, setFeedbacks] = useState<Record<number, AnomalyFeedback>>({});
 
   // Extract submission_id from URL query params
   console.log('Current location:', location);
@@ -81,16 +108,25 @@ export const Review = (): JSX.Element => {
     }
   }, [submissionId]);
 
+  // Fetch thresholds for this submission
+  useEffect(() => {
+    if (submissionId) {
+      apiClient.request(`/api/thresholds/${submissionId}`)
+        .then((res) => setThresholds(res as Thresholds))
+        .catch(() => {});
+    }
+  }, [submissionId]);
+
+  // Fetch results and metrics
   const fetchResults = async () => {
     try {
       setLoading(true);
-      
-      // Fetch real results from the backend
-      const response = await apiClient.request(`/api/submissions/${submissionId}/results`) as ProcessingResults;
+      const response = await apiClient.request(`/api/submissions/${submissionId}/results`) as ProcessingResults & { metrics?: { r2: number, rmse: number }, anomaly_warning?: string };
       setResults(response);
       setChartData(response.chart_data);
       setAnomalies(response.anomalies_data);
-      
+      if (response.metrics) setMetrics(response.metrics);
+      if (response.anomaly_warning) setAnomalyWarning(response.anomaly_warning);
     } catch (err) {
       console.error('Failed to fetch results:', err);
       
@@ -174,6 +210,41 @@ export const Review = (): JSX.Element => {
     }
   };
 
+  // Handle threshold changes
+  const handleThresholdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setThresholds(prev => ({ ...prev, [name]: value }));
+  };
+  const saveThresholds = async () => {
+    await apiClient.request(`/api/thresholds/${submissionId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(thresholds)
+    });
+    fetchResults(); // re-fetch with new thresholds
+  };
+
+  // Handle feedback
+  const submitFeedback = async (anomalyId: number, status: string, notes?: string) => {
+    await apiClient.request(`/api/anomaly-feedback/${submissionId}/${anomalyId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, notes })
+    });
+    setFeedbacks(prev => ({ ...prev, [anomalyId]: { status, notes } }));
+  };
+
+  // Fetch feedbacks for all anomalies
+  useEffect(() => {
+    if (results?.anomalies_data) {
+      results.anomalies_data.forEach((anomaly: AnomalyData) => {
+        apiClient.request(`/api/anomaly-feedback/${submissionId}/${anomaly.id}`)
+          .then((fb) => setFeedbacks(prev => ({ ...prev, [anomaly.id]: fb as AnomalyFeedback })))
+          .catch(() => {});
+      });
+    }
+  }, [results?.anomalies_data, submissionId]);
+
   if (loading) {
     return (
       <div className="bg-gray-50 min-h-screen flex items-center justify-center">
@@ -196,7 +267,7 @@ export const Review = (): JSX.Element => {
             Error Loading Results
           </p>
           <p className="[font-family:'Montserrat',Helvetica] font-normal text-gray-600">
-            {error || "Unable to load analysis results"}
+            {error || (results === null ? "Unable to load analysis results" : "")}
           </p>
           <Link href="/dashboard">
             <Button className="mt-4">
@@ -242,6 +313,56 @@ export const Review = (): JSX.Element => {
 
       {/* Main Content */}
       <main className="flex-1 px-6 py-8 w-full">
+        {/* Threshold configuration UI */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Threshold Configuration</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col md:flex-row md:space-x-4">
+              <div>
+                <label className="block font-medium mb-1">Anomaly Threshold (contamination):</label>
+                <input
+                  type="text"
+                  name="anomaly"
+                  value={thresholds.anomaly}
+                  onChange={handleThresholdChange}
+                  className="border rounded px-2 py-1 w-32"
+                  placeholder="auto"
+                />
+              </div>
+              <div>
+                <label className="block font-medium mb-1">Flagged Threshold (% deviation):</label>
+                <input
+                  type="text"
+                  name="flagged"
+                  value={thresholds.flagged}
+                  onChange={handleThresholdChange}
+                  className="border rounded px-2 py-1 w-32"
+                  placeholder="15"
+                />
+              </div>
+              <div className="flex items-end">
+                <Button onClick={saveThresholds} className="ml-2">Save</Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Show backend warning if present */}
+        {anomalyWarning && (
+          <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-400 text-red-800 rounded">
+            <b>Warning:</b> {anomalyWarning}
+          </div>
+        )}
+
+        {/* Regression metrics */}
+        {metrics.r2 !== undefined && metrics.rmse !== undefined && (
+          <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded">
+            <b>Regression Model Metrics:</b> R² = {metrics.r2.toFixed(3)}, RMSE = {metrics.rmse.toFixed(2)}
+          </div>
+        )}
+
         <div>
           <div className="mb-8">
             <h1 className="[font-family:'Montserrat',Helvetica] font-medium text-3xl text-gray-900 mb-2 flex items-center">
@@ -387,17 +508,23 @@ export const Review = (): JSX.Element => {
                         <p className="[font-family:'Montserrat',Helvetica] font-normal text-xs text-gray-500">
                           Year: {anomaly.year} • Detected: {new Date(anomaly.timestamp).toLocaleString()}
                         </p>
+                        {/* Anomaly explanation */}
+                        {anomaly.explanation && (
+                          <div className="mt-1 text-sm text-blue-700"><b>Explanation:</b> {anomaly.explanation}</div>
+                        )}
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="[font-family:'Montserrat',Helvetica] font-medium"
-                          onClick={() => { setSelectedAnomaly(anomaly); setModalOpen(true); }}
+                      <div className="flex flex-col items-end space-y-2">
+                        {/* Feedback UI */}
+                        <select
+                          value={feedbacks[anomaly.id]?.status || ''}
+                          onChange={e => submitFeedback(anomaly.id, e.target.value)}
+                          className="border rounded px-2 py-1 mb-1"
                         >
-                          <Eye size={16} className="mr-2" />
-                          View Details
-                        </Button>
+                          <option value="">Mark as...</option>
+                          <option value="false_positive">False Positive</option>
+                          <option value="resolved">Resolved</option>
+                        </select>
+                        {/* Optionally, add a notes field for feedback */}
                       </div>
                     </div>
                   ))}

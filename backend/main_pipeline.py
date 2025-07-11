@@ -2,14 +2,14 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import joblib
-from ai_module import add_features, train_regression, predict, tune_regression, train_anomaly_detector, predict_anomalies, gpt_summary
+from ai_module import add_features, train_regression, predict, tune_regression, train_anomaly_detector, predict_anomalies, gpt_summary, regression_metrics, explain_anomaly
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 
 # Output directories
-TABLES = 'backend/deliverables/tables/'
-PLOTS = 'backend/deliverables/plots/'
-LOGS = 'backend/deliverables/logs/'
+TABLES = 'deliverables/tables/'
+PLOTS = 'deliverables/plots/'
+LOGS = 'deliverables/logs/'
 
 # Debug: Print environment variables and output paths
 submission_id = os.environ.get('SUBMISSION_ID', None)
@@ -26,13 +26,17 @@ print(f"[DEBUG] Output files will use suffix: {output_suffix}")
 print(f"[DEBUG] Output directory: {TABLES}")
 
 # Ensure deliverables folder exists
-os.makedirs('backend/deliverables', exist_ok=True)
+os.makedirs('deliverables', exist_ok=True)
+os.makedirs('deliverables/tables', exist_ok=True)
+os.makedirs('deliverables/plots', exist_ok=True)
 
 # Load and clean data
-input_csv = os.environ.get('SUBMISSION_CSV', 'backend/emissions_by_unit.csv')
+input_csv = os.environ.get('SUBMISSION_CSV', 'emissions_by_unit.csv')
 raw = pd.read_csv(input_csv, encoding='latin1')
+raw.columns = raw.columns.str.strip()
 print(f"[1/12] Loaded raw data from {input_csv}: shape={raw.shape}")
 df_clean = raw.dropna()
+df_clean.columns = df_clean.columns.str.strip()
 print(f"[2/12] Cleaned data: shape={df_clean.shape}")
 if df_clean.empty:
     raise ValueError("Cleaned DataFrame is empty after dropna(). Check input file.")
@@ -58,7 +62,7 @@ print(f"[6/12] Saved features to {features_path}.")
 
 # Prepare regression
 X = features[['Reporting Year', 'rolling_7d', 'pct_change']]
-y = features['Unit CO2 emissions (non-biogenic) ']
+y = features['Unit CO2 emissions (non-biogenic)']
 print(f"[7/12] Prepared regression features: X.shape={X.shape}, y.shape={y.shape}")
 
 # Train/test split
@@ -71,9 +75,13 @@ model = train_regression(X_train, y_train)
 joblib.dump(model, TABLES + 'model.pkl')
 print("[9/12] Trained regression model and saved model.pkl.")
 
+# Regression metrics
+metrics = regression_metrics(model, X_test, y_test)
+print(f"[Metrics] R^2: {metrics['r2']:.3f}, RMSE: {metrics['rmse']:.3f}")
+
 # Prediction
 features['Predicted CO2'] = predict(model, X)
-features['Deviation (%)'] = ((features['Unit CO2 emissions (non-biogenic) '] - features['Predicted CO2']) / features['Predicted CO2']) * 100
+features['Deviation (%)'] = ((features['Unit CO2 emissions (non-biogenic)'] - features['Predicted CO2']) / features['Predicted CO2']) * 100
 features['Flagged'] = features['Deviation (%)'].apply(lambda x: 'Yes' if abs(x) > 15 else 'No')
 # Save flagged emissions output with per-submission suffix
 flagged_path = TABLES + f'flagged_emissions_output{output_suffix}.csv'
@@ -98,7 +106,7 @@ else:
 print(f"[Anomaly Detection] Using contamination: {anomaly_threshold}")
 
 # Improved Anomaly detection with scaling and more features
-anomaly_features = features[['Unit CO2 emissions (non-biogenic) ', 'rolling_7d', 'pct_change']]
+anomaly_features = features[['Unit CO2 emissions (non-biogenic)', 'rolling_7d', 'pct_change']]
 scaler = StandardScaler()
 anomaly_features_scaled = scaler.fit_transform(anomaly_features)
 from ai_module import train_anomaly_detector, predict_anomalies
@@ -107,19 +115,33 @@ if anomaly_threshold == 'auto':
 else:
     anom_model = train_anomaly_detector(anomaly_features_scaled, contamination=anomaly_threshold)
 features['Anomaly'] = predict_anomalies(anom_model, anomaly_features_scaled)
+
+# Add anomaly explanations
+features['Anomaly Explanation'] = features.apply(lambda row: explain_anomaly(row) if row['Anomaly'] else '', axis=1)
+
 # Save anomaly output with per-submission suffix
 anomaly_path = TABLES + f'final_output_with_anomalies{output_suffix}.csv'
 features.to_csv(anomaly_path, index=False)
 print(f"[Anomaly Detection] Saved anomaly output to {anomaly_path}.")
 
+# Warnings for all/no anomalies
+anomaly_count = features['Anomaly'].sum()
+anomaly_warning = ''
+if anomaly_count == 0:
+    anomaly_warning = 'No anomalies detected. Consider lowering the threshold.'
+elif anomaly_count == len(features):
+    anomaly_warning = 'All points flagged as anomalies. Consider raising the threshold.'
+if anomaly_warning:
+    print(f"[Warning] {anomaly_warning}")
+
 # Visualization
 plt.figure(figsize=(10, 6))
-features.groupby('Reporting Year')['Unit CO2 emissions (non-biogenic) '].sum().plot(kind='line', marker='o')
+features.groupby('Reporting Year')['Unit CO2 emissions (non-biogenic)'].sum().plot(kind='line', marker='o')
 plt.title('Total CO2 Emissions Over Time')
 plt.ylabel('CO2 Emissions (metric tons)')
 plt.xlabel('Year')
 plt.grid(True)
-plt.savefig(PLOTS + 'co2_emissions_over_time.png')
+plt.savefig(PLOTS + f'co2_emissions_over_time{output_suffix}.png')
 plt.close()
 print("[11/12] Saved CO2 emissions over time plot.")
 
@@ -141,4 +163,8 @@ features['summary'] = summary
 features.to_csv(summary_csv_path, index=False)
 print(f"[Summary] Saved summary CSV to {summary_csv_path}.")
 
-print("Pipeline complete. All outputs saved in backend/deliverables/.")
+# After computing metrics, add them as columns to the features DataFrame for API access
+features['R2'] = metrics['r2']
+features['RMSE'] = metrics['rmse']
+
+print("Pipeline complete. All outputs saved in deliverables/.")

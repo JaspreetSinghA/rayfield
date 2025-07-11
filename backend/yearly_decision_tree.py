@@ -3,11 +3,30 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
+import os
+
+# Get submission ID from environment
+submission_id = os.environ.get('SUBMISSION_ID', None)
+if submission_id:
+    output_suffix = f'_{submission_id}'
+else:
+    output_suffix = ''
 
 # Load and clean data
-TABLES = 'backend/deliverables/tables/'
-PLOTS = 'backend/deliverables/plots/'
-df = pd.read_csv(TABLES + 'flagged_emissions_output.csv', encoding='latin1')
+TABLES = 'deliverables/tables/'
+PLOTS = 'deliverables/plots/'
+
+# Ensure directories exist
+os.makedirs(TABLES, exist_ok=True)
+os.makedirs(PLOTS, exist_ok=True)
+
+# Use submission-specific file path
+flagged_file = TABLES + f'flagged_emissions_output{output_suffix}.csv'
+if not os.path.exists(flagged_file):
+    print(f"Warning: {flagged_file} not found, trying fallback...")
+    flagged_file = TABLES + 'flagged_emissions_output.csv'
+
+df = pd.read_csv(flagged_file, encoding='latin1')
 df.columns = df.columns.str.strip()
 
 # Create year_index and aggregate average CO2 per year
@@ -49,5 +68,8 @@ plt.ylabel("Average CO2 Emissions (non-biogenic)")
 plt.title("Decision Tree Regression: Forecast vs Actual")
 plt.legend()
 plt.tight_layout()
-plt.savefig(PLOTS + 'yearly_decision_tree_forecast_vs_actual.png')
-plt.show() 
+plt.savefig(PLOTS + f'yearly_decision_tree_forecast_vs_actual{output_suffix}.png')
+plt.close()
+
+importance = best_model.coef_
+print("Feature importances:", importance) 

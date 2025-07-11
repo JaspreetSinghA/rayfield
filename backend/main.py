@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, Path
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, Path, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -241,6 +241,7 @@ async def upload_files_test(
                 if file.filename.endswith('.csv'):
                     try:
                         df = pd.read_csv(io.StringIO(content.decode('utf-8')))
+                        df.columns = df.columns.str.strip()
                         # Use your existing data analysis
                         analysis_result = data_analyzer.analyze_data(df)
                         uploaded_files.append({
@@ -437,6 +438,7 @@ async def upload_files(
             # Validate CSV columns
             try:
                 df = pd.read_csv(file_path, encoding='latin1')
+                df.columns = df.columns.str.strip()
                 required_columns = [
                     'Unit CO2 emissions (non-biogenic)',
                     'Reporting Year'
@@ -611,6 +613,30 @@ async def process_energy_data(
         "message": "This endpoint is deprecated. Results are available after upload."
     })
 
+# In-memory storage for thresholds and feedback (for demo; replace with DB in production)
+THRESHOLDS = {}
+ANOMALY_FEEDBACK = {}
+
+@app.get("/api/thresholds/{submission_id}")
+async def get_thresholds(submission_id: str, current_user: dict = Depends(get_current_user)):
+    return THRESHOLDS.get(submission_id, {"anomaly": "auto", "flagged": 15})
+
+@app.post("/api/thresholds/{submission_id}")
+async def set_thresholds(submission_id: str, thresholds: dict = Body(...), current_user: dict = Depends(get_current_user)):
+    THRESHOLDS[submission_id] = thresholds
+    return {"status": "ok", "thresholds": thresholds}
+
+@app.post("/api/anomaly-feedback/{submission_id}/{anomaly_id}")
+async def submit_anomaly_feedback(submission_id: str, anomaly_id: int, feedback: dict = Body(...), current_user: dict = Depends(get_current_user)):
+    key = f"{submission_id}:{anomaly_id}"
+    ANOMALY_FEEDBACK[key] = feedback
+    return {"status": "ok", "feedback": feedback}
+
+@app.get("/api/anomaly-feedback/{submission_id}/{anomaly_id}")
+async def get_anomaly_feedback(submission_id: str, anomaly_id: int, current_user: dict = Depends(get_current_user)):
+    key = f"{submission_id}:{anomaly_id}"
+    return ANOMALY_FEEDBACK.get(key, {})
+
 @app.get("/api/submissions/{submission_id}/results")
 async def get_submission_results(
     submission_id: str,
@@ -618,99 +644,173 @@ async def get_submission_results(
 ):
     import os
     import pandas as pd
+    import time
+    # Check both possible locations for the files
     results_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'deliverables', 'tables')
     summary_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'deliverables', 'logs')
+    # Also check the nested backend/deliverables location
+    results_dir_nested = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'backend', 'deliverables', 'tables')
+    summary_dir_nested = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'backend', 'deliverables', 'logs')
+    # Try primary location first, then nested location
     anomalies_path = os.path.join(results_dir, f'final_output_with_anomalies_{submission_id}.csv')
     summary_path = os.path.join(summary_dir, f'weekly_summary_{submission_id}.txt')
     chart_path = os.path.join(results_dir, f'features_{submission_id}.csv')
-    # Fallback to global files if per-submission files are missing
+    
+    # If not found in primary location, try nested location
     if not os.path.exists(anomalies_path):
-        print(f"[DEBUG] Per-submission anomalies file not found: {anomalies_path}, falling back to global file.")
-        anomalies_path = os.path.join(results_dir, 'final_output_with_anomalies.csv')
-    else:
-        print(f"[DEBUG] Using per-submission anomalies file: {anomalies_path}")
+        anomalies_path = os.path.join(results_dir_nested, f'final_output_with_anomalies_{submission_id}.csv')
     if not os.path.exists(summary_path):
-        print(f"[DEBUG] Per-submission summary file not found: {summary_path}, falling back to global file.")
-        summary_path = os.path.join(summary_dir, 'weekly_summary.txt')
-    else:
-        print(f"[DEBUG] Using per-submission summary file: {summary_path}")
+        summary_path = os.path.join(summary_dir_nested, f'weekly_summary_{submission_id}.txt')
     if not os.path.exists(chart_path):
-        print(f"[DEBUG] Per-submission chart file not found: {chart_path}, falling back to global file.")
-        chart_path = os.path.join(results_dir, 'features.csv')
-    else:
-        print(f"[DEBUG] Using per-submission chart file: {chart_path}")
+        chart_path = os.path.join(results_dir_nested, f'features_{submission_id}.csv')
+    
+    # Check for per-submission files only; do not fallback to global
+    missing = []
+    if not os.path.exists(anomalies_path):
+        print(f"[ERROR] Per-submission anomalies file not found: {anomalies_path}")
+        missing.append('anomalies')
+    if not os.path.exists(summary_path):
+        print(f"[ERROR] Per-submission summary file not found: {summary_path}")
+        missing.append('summary')
+    if not os.path.exists(chart_path):
+        print(f"[ERROR] Per-submission chart file not found: {chart_path}")
+        missing.append('chart')
+    if missing:
+        return JSONResponse(status_code=404, content={
+            "message": f"Analysis results not available for submission {submission_id}. Missing: {', '.join(missing)}. Please check your upload or contact support.",
+            "missing": missing
+        })
     start_time = time.time()
     try:
         anomalies_data = []
         total_records = 0
         anomalies_found = 0
-        if os.path.exists(anomalies_path):
-            df = pd.read_csv(anomalies_path)
-            print(f"[DEBUG] Loaded anomalies file: {anomalies_path}, shape={df.shape}")
-            total_records = int(len(df))
-            if 'Anomaly' in df.columns:
-                anomalies_found = int((df['Anomaly'] == True).sum())
-            else:
-                print(f"[DEBUG] 'Anomaly' column not found in {anomalies_path}")
-            max_anomalies = 100
-            anomaly_rows = [row for idx, row in df.iterrows() if row.get('Anomaly', False) == True]
-            for idx, row in enumerate(anomaly_rows[:max_anomalies]):
-                facility = row.get("Facility Name", "Unknown")
-                year = row.get("Reporting Year", "Unknown")
-                try:
-                    year = int(year)
-                except Exception:
-                    year = str(year)
-                emission_value = row.get("Unit CO2 emissions (non-biogenic) ", row.get("Unit CO2 emissions (non-biogenic)", 0))
-                try:
-                    emission_value = float(emission_value)
-                except Exception:
-                    emission_value = 0.0
-                deviation = None
-                try:
-                    deviation = float(row.get("Deviation (%)", row.get("Deviation (%) ", 0)))
-                except Exception:
-                    deviation = None
-                if deviation is not None:
-                    if abs(deviation) >= 30:
-                        severity = "High"
-                    elif abs(deviation) >= 15:
-                        severity = "Medium"
-                    else:
-                        severity = "Low"
-                else:
-                    severity = "High"
-                anomaly_dict = {
-                    "id": int(idx),
-                    "facility": str(facility),
-                    "year": year,
-                    "emission_value": emission_value,
-                    "severity": severity,
-                    "timestamp": f"{year}-01-01T00:00:00Z"
-                }
-                for k, v in row.items():
-                    if k not in anomaly_dict:
-                        anomaly_dict[k] = v
-                anomalies_data.append(anomaly_dict)
+        df = pd.read_csv(anomalies_path)
+        df.columns = df.columns.str.strip()
+        print(f"[DEBUG] Loaded anomalies file: {anomalies_path}, shape={df.shape}")
+        total_records = int(len(df))
+        if 'Anomaly' in df.columns:
+            anomalies_found = int((df['Anomaly'] == True).sum())
         else:
-            print(f"[DEBUG] Anomalies file not found: {anomalies_path}")
-        summary = None
-        if os.path.exists(summary_path):
-            with open(summary_path, 'r') as f:
-                summary = f.read()
-        chart_data = None
-        if os.path.exists(chart_path):
-            chart_df = pd.read_csv(chart_path)
-            labels = chart_df["Reporting Year"].tolist()[:100]
-            emissions = chart_df["Unit CO2 emissions (non-biogenic) "].tolist()[:100]
-            anomaly_years = set(a["year"] for a in anomalies_data)
-            anomaly_indices = [i for i, y in enumerate(labels) if y in anomaly_years]
-            chart_data = {
-                "labels": labels,
-                "emissions": emissions,
-                "anomaly_indices": anomaly_indices
+            print(f"[DEBUG] 'Anomaly' column not found in {anomalies_path}")
+        max_anomalies = 100
+        anomaly_rows = [row for idx, row in df.iterrows() if row.get('Anomaly', False) == True]
+        for idx, row in enumerate(anomaly_rows[:max_anomalies]):
+            facility = row.get("Facility Name", "Unknown")
+            year = row.get("Reporting Year", "Unknown")
+            try:
+                year = int(year)
+            except Exception:
+                year = str(year)
+            # Handle column name with or without trailing space
+            co2_col = None
+            for col in row.index:
+                if col.strip() == "Unit CO2 emissions (non-biogenic)":
+                    co2_col = col
+                    break
+            emission_value = row.get(co2_col, 0) if co2_col else 0
+            try:
+                emission_value = float(emission_value)
+            except Exception:
+                emission_value = 0.0
+            deviation = None
+            try:
+                deviation = float(row.get("Deviation (%)", row.get("Deviation (%) ", 0)))
+            except Exception:
+                deviation = None
+            if deviation is not None:
+                if abs(deviation) >= 30:
+                    severity = "High"
+                elif abs(deviation) >= 15:
+                    severity = "Medium"
+                else:
+                    severity = "Low"
+            else:
+                severity = "High"
+            anomaly_dict = {
+                "id": int(idx),
+                "facility": str(facility),
+                "year": year,
+                "emission_value": emission_value,
+                "severity": severity,
+                "timestamp": f"{year}-01-01T00:00:00Z"
             }
+            for k, v in row.items():
+                if k not in anomaly_dict:
+                    # Handle nan values for JSON serialization
+                    if pd.isna(v):
+                        anomaly_dict[k] = None
+                    elif isinstance(v, (int, float)):
+                        # Convert to native Python types to avoid numpy/pandas serialization issues
+                        anomaly_dict[k] = float(v) if isinstance(v, float) else int(v)
+                    else:
+                        anomaly_dict[k] = str(v) if v is not None else None
+            anomalies_data.append(anomaly_dict)
+        summary = None
+        with open(summary_path, 'r') as f:
+            summary = f.read()
+        chart_data = None
+        chart_df = pd.read_csv(chart_path)
+        chart_df.columns = chart_df.columns.str.strip()
+        labels_raw = chart_df["Reporting Year"].tolist()[:100]
+        # Handle nan values in labels list
+        labels = []
+        for val in labels_raw:
+            if pd.isna(val):
+                labels.append(None)
+            elif isinstance(val, (int, float)):
+                labels.append(int(val) if isinstance(val, float) and val.is_integer() else val)
+            else:
+                labels.append(str(val) if val is not None else None)
+        # Handle column name with or without trailing space
+        co2_col = None
+        for col in chart_df.columns:
+            if col.strip() == "Unit CO2 emissions (non-biogenic)":
+                co2_col = col
+                break
+        emissions_raw = chart_df[co2_col].tolist()[:100] if co2_col else []
+        # Handle nan values in emissions list
+        emissions = []
+        for val in emissions_raw:
+            if pd.isna(val):
+                emissions.append(None)
+            elif isinstance(val, (int, float)):
+                emissions.append(float(val) if isinstance(val, float) else int(val))
+            else:
+                emissions.append(str(val) if val is not None else None)
+        anomaly_years = set(a["year"] for a in anomalies_data)
+        anomaly_indices = [i for i, y in enumerate(labels) if y in anomaly_years]
+        chart_data = {
+            "labels": labels,
+            "emissions": emissions,
+            "anomaly_indices": anomaly_indices
+        }
         processing_time = time.time() - start_time
+        metrics = None
+        anomaly_warning = ''
+        if 'R2' in df.columns and 'RMSE' in df.columns:
+            r2_val = df['R2'].iloc[0]
+            rmse_val = df['RMSE'].iloc[0]
+            # Handle nan values in metrics
+            metrics = {
+                "r2": float(r2_val) if not pd.isna(r2_val) else None,
+                "rmse": float(rmse_val) if not pd.isna(rmse_val) else None
+            }
+        if 'Anomaly Explanation' in df.columns:
+            for a in anomalies_data:
+                idx = a.get('id', None)
+                if idx is not None and idx < len(df):
+                    explanation = df.iloc[idx].get('Anomaly Explanation', '')
+                    # Handle nan values in explanation
+                    if pd.isna(explanation):
+                        a['explanation'] = ''
+                    else:
+                        a['explanation'] = str(explanation)
+        anomaly_count = int((df['Anomaly'] == True).sum()) if 'Anomaly' in df.columns else 0
+        if anomaly_count == 0:
+            anomaly_warning = 'No anomalies detected. Consider lowering the threshold.'
+        elif anomaly_count == len(df):
+            anomaly_warning = 'All points flagged as anomalies. Consider raising the threshold.'
         return {
             "submission_id": str(submission_id),
             "anomalies_found": int(anomalies_found),
@@ -718,7 +818,9 @@ async def get_submission_results(
             "processing_time": float(processing_time),
             "anomalies_data": anomalies_data,
             "summary": summary,
-            "chart_data": chart_data
+            "chart_data": chart_data,
+            "metrics": metrics,
+            "anomaly_warning": anomaly_warning
         }
     except Exception as e:
         print(f"[DEBUG] Exception in get_submission_results: {e}")

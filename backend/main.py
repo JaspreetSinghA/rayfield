@@ -17,28 +17,50 @@ import time
 # Import your existing modules
 try:
     from emissions_model import EmissionsModel
-    from data_analysis import DataAnalyzer
-    from ai_module import AIProcessor
-    from summary_generator import EnergySummaryGenerator
 except ImportError:
-    # Mock classes for development
     class EmissionsModel:
         def generate_system_report(self):
             return {"status": "mock_data", "emissions": 150.5}
-    
+
+# Import or define DataAnalyzer
+try:
+    from data_analysis import DataAnalyzer
+except ImportError:
     class DataAnalyzer:
         def analyze_data(self, df):
             return {"rows": len(df), "columns": len(df.columns)}
         def generate_analytics_report(self):
             return {"analytics": "mock_data"}
-    
+
+# Import or define AIProcessor
+try:
+    from ai_module import AIProcessor
+except ImportError:
     class AIProcessor:
         def process_text(self, text):
             return {"sentiment": "positive", "keywords": ["mock", "data"]}
-    
+
+# Import or define EnergySummaryGenerator
+try:
+    from summary_generator import EnergySummaryGenerator
+except ImportError:
     class EnergySummaryGenerator:
         def generate_summary(self, results):
             return f"Analysis completed for {results.get('total_records', 0)} records. Found {results.get('anomalies_found', 0)} anomalies."
+
+# Import or define ChatGPTSummaryGenerator
+try:
+    from chatgpt_summary import ChatGPTSummaryGenerator
+    print("[DEBUG] Imported real ChatGPTSummaryGenerator from chatgpt_summary.py")
+except ImportError:
+    print("[WARNING] Could not import real ChatGPTSummaryGenerator, using mock fallback.")
+    class ChatGPTSummaryGenerator:
+        def __init__(self):
+            print("[MOCK] Using mock ChatGPTSummaryGenerator")
+        def generate_summary(self, results):
+            print("[MOCK] Generating mock summary")
+            msg = f"[MOCK SUMMARY] Generate a compliance summary for {results.get('anomalies_found', 0)} flagged out of {results.get('total_records', 0)} records. Give 2 example facilities with their actual, predicted, and deviation."
+            return {"summary_short": msg, "summary_full": msg}
 
 app = FastAPI(
     title="Rayfield Systems API",
@@ -63,6 +85,20 @@ emissions_model = EmissionsModel()
 data_analyzer = DataAnalyzer()
 ai_processor = AIProcessor()
 summary_generator = EnergySummaryGenerator()
+
+# Initialize ChatGPT summary generator (with fallback)
+try:
+    print(f"[DEBUG] Attempting to initialize ChatGPTSummaryGenerator")
+    chatgpt_generator = ChatGPTSummaryGenerator()
+    use_chatgpt = True
+    print(f"[INFO] ChatGPTSummaryGenerator initialized successfully")
+except Exception as e:
+    print(f"[WARNING] ChatGPT not available: {e}")
+    print(f"[DEBUG] Exception type: {type(e).__name__}")
+    import traceback
+    print(f"[DEBUG] Full traceback: {traceback.format_exc()}")
+    chatgpt_generator = None
+    use_chatgpt = False
 
 # SQLite database setup
 DATABASE_URL = "sqlite:///./rayfield.db"
@@ -746,9 +782,79 @@ async def get_submission_results(
                     else:
                         anomaly_dict[k] = str(v) if v is not None else None
             anomalies_data.append(anomaly_dict)
+        # Calculate processing time before summary generation
+        processing_time = time.time() - start_time
+        
+        # Generate summary using ChatGPT if available, otherwise use file
         summary = None
-        with open(summary_path, 'r') as f:
-            summary = f.read()
+        summary_full = None
+        gpt_summary_path = os.path.join(summary_dir, f'summary_gpt_{submission_id}.txt')
+        # 1. Try to load persisted GPT summary
+        if os.path.exists(gpt_summary_path):
+            try:
+                with open(gpt_summary_path, 'r') as f:
+                    summary_full = f.read()
+                # Get the first non-empty line as the short summary
+                summary = next((line for line in summary_full.split('\n') if line.strip()), "")
+                if not summary and summary_full:
+                    summary = summary_full[:200]
+                print(f"[DEBUG] Returning summary: {summary[:100]}")
+                print(f"[DEBUG] Returning summary_full: {summary_full[:100]}")
+                print(f"[INFO] Loaded persisted GPT summary for submission {submission_id}")
+            except Exception as e:
+                print(f"[WARNING] Could not read persisted GPT summary: {e}")
+                summary = None
+                summary_full = None
+        # 2. If not found, generate and persist using ChatGPT
+        if summary is None and use_chatgpt and chatgpt_generator:
+            try:
+                print(f"[DEBUG] Attempting ChatGPT summary generation for submission {submission_id}")
+                print(f"[DEBUG] ChatGPT available: {use_chatgpt}, generator: {chatgpt_generator}")
+                analysis_results = {
+                    "anomalies_found": anomalies_found,
+                    "total_records": total_records,
+                    "processing_time": processing_time,
+                    "anomalies_data": anomalies_data
+                }
+                print(f"[DEBUG] Analysis results for ChatGPT: {analysis_results}")
+                summary_dict = chatgpt_generator.generate_summary(analysis_results)
+                # Check if this is a mock summary
+                is_mock = False
+                if summary_dict and isinstance(summary_dict, dict):
+                    short = summary_dict.get("summary_short", "")
+                    if "[MOCK SUMMARY]" in short:
+                        is_mock = True
+                if is_mock:
+                    print(f"[WARNING] Mock summary generated. Not persisting summary for submission {submission_id}.")
+                    summary = None
+                    summary_full = None
+                else:
+                    summary = summary_dict.get("summary_short", "")
+                    summary_full = summary_dict.get("summary_full", summary)
+                    print(f"[DEBUG] ChatGPT summary generated successfully, short length: {len(summary) if summary else 0}, full length: {len(summary_full) if summary_full else 0}")
+                    # Persist the full summary
+                    os.makedirs(summary_dir, exist_ok=True)
+                    with open(gpt_summary_path, 'w') as f:
+                        f.write(summary_full)
+                    print(f"[INFO] Generated and persisted ChatGPT summary for submission {submission_id}")
+            except Exception as e:
+                print(f"[WARNING] ChatGPT summary generation failed: {e}")
+                print(f"[DEBUG] Exception type: {type(e).__name__}")
+                print(f"[DEBUG] Exception details: {str(e)}")
+                import traceback
+                print(f"[DEBUG] Full traceback: {traceback.format_exc()}")
+                summary = None
+                summary_full = None
+        # 3. Fallback to file-based summary
+        if summary is None:
+            try:
+                with open(summary_path, 'r') as f:
+                    summary_full = f.read()
+                summary = summary_full.split('\n')[0] if summary_full else ""
+            except Exception as e:
+                print(f"[ERROR] Could not read summary file: {e}")
+                summary = f"Analysis completed for {total_records} records. Found {anomalies_found} anomalies."
+                summary_full = summary
         chart_data = None
         chart_df = pd.read_csv(chart_path)
         chart_df.columns = chart_df.columns.str.strip()
@@ -785,7 +891,6 @@ async def get_submission_results(
             "emissions": emissions,
             "anomaly_indices": anomaly_indices
         }
-        processing_time = time.time() - start_time
         metrics = None
         anomaly_warning = ''
         if 'R2' in df.columns and 'RMSE' in df.columns:
@@ -818,6 +923,7 @@ async def get_submission_results(
             "processing_time": float(processing_time),
             "anomalies_data": anomalies_data,
             "summary": summary,
+            "summary_full": summary_full,
             "chart_data": chart_data,
             "metrics": metrics,
             "anomaly_warning": anomaly_warning
@@ -922,6 +1028,67 @@ async def download_report(
     if not os.path.isfile(file_path):
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(file_path, filename=filename)
+
+@app.post("/api/chatgpt/test")
+async def test_chatgpt_integration(
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Test ChatGPT integration with sample data
+    """
+    if not use_chatgpt or not chatgpt_generator:
+        return JSONResponse(status_code=503, content={
+            "message": "ChatGPT not available",
+            "error": "OPEN_AI_KEY not configured or ChatGPT service unavailable"
+        })
+    
+    try:
+        # Sample analysis results for testing
+        sample_results = {
+            "anomalies_found": 3,
+            "total_records": 1000,
+            "processing_time": 2.5,
+            "anomalies_data": [
+                {
+                    "facility": "Power Plant Alpha",
+                    "year": 2024,
+                    "emission_value": 2450.67,
+                    "severity": "High",
+                    "timestamp": "2024-01-01T00:00:00Z"
+                },
+                {
+                    "facility": "Energy Station Beta",
+                    "year": 2024,
+                    "emission_value": 1890.23,
+                    "severity": "Medium",
+                    "timestamp": "2024-01-01T00:00:00Z"
+                },
+                {
+                    "facility": "Industrial Complex Gamma",
+                    "year": 2024,
+                    "emission_value": 3200.45,
+                    "severity": "High",
+                    "timestamp": "2024-01-01T00:00:00Z"
+                }
+            ]
+        }
+        
+        # Generate summary using ChatGPT
+        summary = chatgpt_generator.generate_summary(sample_results)
+        
+        return {
+            "message": "ChatGPT integration test successful",
+            "summary": summary,
+            "model": "gpt-4o-mini",
+            "status": "success"
+        }
+        
+    except Exception as e:
+        return JSONResponse(status_code=500, content={
+            "message": "ChatGPT integration test failed",
+            "error": str(e),
+            "status": "error"
+        })
 
 if __name__ == "__main__":
     import uvicorn

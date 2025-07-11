@@ -42,7 +42,8 @@ interface ProcessingResults {
   total_records: number;
   processing_time: number;
   anomalies_data: AnomalyData[];
-  summary: string;
+  summary: string; // concise summary
+  summary_full?: string; // full summary (optional)
   chart_data: ChartData;
 }
 
@@ -90,6 +91,7 @@ export const Review = (): JSX.Element => {
   const [metrics, setMetrics] = useState<{ r2?: number; rmse?: number }>({});
   const [anomalyWarning, setAnomalyWarning] = useState<string>("");
   const [feedbacks, setFeedbacks] = useState<Record<number, AnomalyFeedback>>({});
+  const [showFullSummary, setShowFullSummary] = useState(false);
 
   // Extract submission_id from URL query params
   console.log('Current location:', location);
@@ -244,6 +246,15 @@ export const Review = (): JSX.Element => {
       });
     }
   }, [results?.anomalies_data, submissionId]);
+
+  const isValidSummary = (summary: string | undefined | null) => {
+    if (!summary) return false;
+    if (typeof summary !== "string") return false;
+    if (summary.trim() === "") return false;
+    if (summary.includes("[MOCK SUMMARY]")) return false;
+    if (summary.includes("[ERROR]")) return false;
+    return true;
+  };
 
   if (loading) {
     return (
@@ -451,18 +462,35 @@ export const Review = (): JSX.Element => {
             </div>
 
             {/* Analysis Summary */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl">
-                  Analysis Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="[font-family:'Montserrat',Helvetica] font-normal text-gray-900">
-                  {results.summary}
-                </p>
-              </CardContent>
-            </Card>
+            {isValidSummary(results.summary) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl">
+                    Analysis Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="[font-family:'Montserrat',Helvetica] font-normal text-gray-900">
+                    {results.summary}
+                  </p>
+                  {isValidSummary(results.summary_full) && results.summary_full !== results.summary && (
+                    <>
+                      <button
+                        className="mt-2 text-blue-600 underline cursor-pointer text-sm"
+                        onClick={() => setShowFullSummary((prev) => !prev)}
+                      >
+                        {showFullSummary ? "Hide Full Report" : "View Full Report"}
+                      </button>
+                      {showFullSummary && (
+                        <div className="mt-2 whitespace-pre-line text-gray-800 text-sm border rounded p-2 bg-gray-50">
+                          {results.summary_full}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Energy Emissions Chart */}
             <Card>

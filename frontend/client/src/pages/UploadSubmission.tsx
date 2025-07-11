@@ -67,7 +67,9 @@ export const UploadSubmission = (): JSX.Element => {
   };
 
   const processEnergyData = async () => {
+    console.log('processEnergyData called', { uploadedFiles, formData, thresholdError });
     if (uploadedFiles.length === 0) {
+      setFormError("Please upload at least one CSV file");
       alert("Please upload at least one CSV file");
       return;
     }
@@ -76,6 +78,7 @@ export const UploadSubmission = (): JSX.Element => {
       return;
     }
     if (thresholdError) {
+      setFormError(thresholdError);
       alert(thresholdError);
       return;
     }
@@ -102,11 +105,34 @@ export const UploadSubmission = (): JSX.Element => {
       }
 
       setProcessingStep("Processing data...");
-      const uploadResponse = await apiClient.upload.submitFiles(formDataToSend) as { submission_id: string, files: any[] };
+      const uploadResponse = await apiClient.upload.submitFiles(formDataToSend);
+
+      // Check for backend file errors
+      if (uploadResponse && Array.isArray(uploadResponse.files)) {
+        const errored = uploadResponse.files.find((f: any) => f.error);
+        if (errored) {
+          setFormError(`Upload failed: ${errored.error}`);
+          setIsProcessing(false);
+          setProcessingStep("");
+          return;
+        }
+      }
+
+      // Extract submission_id from the first result
+      let submission_id = undefined;
+      if (uploadResponse && Array.isArray(uploadResponse.results) && uploadResponse.results.length > 0) {
+        submission_id = uploadResponse.results[0].submission_id;
+      }
+      if (!submission_id) {
+        setFormError("Submission failed: No submission_id returned from backend. (Check if your CSV has all required columns.)");
+        setIsProcessing(false);
+        setProcessingStep("");
+        return;
+      }
 
       setProcessingStep("Fetching results...");
       // Fetch results using the new endpoint
-      const results = await apiClient.request(`/api/submissions/${uploadResponse.submission_id}/results`, {
+      const results = await apiClient.request(`/api/submissions/${submission_id}/results`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -115,12 +141,12 @@ export const UploadSubmission = (): JSX.Element => {
       setProcessingStep("Complete!");
       
       console.log('Upload response:', uploadResponse);
-      console.log('About to navigate to:', `/review?submission_id=${uploadResponse.submission_id}`);
+      console.log('About to navigate to:', `/review?submission_id=${submission_id}`);
       
       // Navigate to review page with results
       setTimeout(() => {
-        console.log('Navigating to:', `/review?submission_id=${uploadResponse.submission_id}`);
-        window.location.href = `/review?submission_id=${uploadResponse.submission_id}`;
+        console.log('Navigating to:', `/review?submission_id=${submission_id}`);
+        window.location.href = `/review?submission_id=${submission_id}`;
       }, 2000);
 
     } catch (error) {
@@ -167,6 +193,12 @@ export const UploadSubmission = (): JSX.Element => {
       {/* Main Content */}
       <main className="flex-1 px-6 py-8 w-full">
         <div>
+          {/* Always show form error at the top if present */}
+          {formError && (
+            <div className="mb-4 text-red-600 text-lg font-bold text-center bg-red-50 border border-red-200 rounded p-2">
+              {formError}
+            </div>
+          )}
           <div className="mb-8">
             <h1 className="[font-family:'Montserrat',Helvetica] font-medium text-3xl text-gray-900 mb-2 flex items-center">
               <Upload className="mr-3 text-blue-600" size={32} />
@@ -186,9 +218,6 @@ export const UploadSubmission = (): JSX.Element => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {formError && (
-                  <div className="mb-2 text-red-600 text-sm font-medium">{formError}</div>
-                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="title" className="[font-family:'Montserrat',Helvetica] font-medium">

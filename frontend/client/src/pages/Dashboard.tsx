@@ -118,16 +118,16 @@ export const Dashboard = (): JSX.Element => {
             <Card className="border-2 border-gray-300 shadow-md hover:shadow-lg transition-shadow aspect-square bg-white">
               <CardHeader className="pb-4 border-b border-gray-200">
                 <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl">
-                  Text Input
+                  Upload Histories
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col justify-between h-full p-6">
                 <p className="[font-family:'Montserrat',Helvetica] font-normal text-base text-gray-600 mb-6">
-                  Enter text content directly for immediate processing and evaluation
+                  View and manage all your previous uploads, analysis results, and submission history
                 </p>
-                <Link href="/text-input">
+                <Link href="/upload-history">
                   <Button className="w-full h-12 bg-black hover:bg-black/80 [font-family:'Montserrat',Helvetica] font-medium text-base border-2 border-black">
-                    Input Text
+                    View History
                   </Button>
                 </Link>
               </CardContent>
@@ -169,23 +169,7 @@ export const Dashboard = (): JSX.Element => {
               </CardContent>
             </Card>
 
-            <Card className="border-2 border-gray-300 shadow-md hover:shadow-lg transition-shadow aspect-square bg-white">
-              <CardHeader className="pb-4 border-b border-gray-200">
-                <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-xl">
-                  Upload Log
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col justify-between h-full p-6">
-                <p className="[font-family:'Montserrat',Helvetica] font-normal text-base text-gray-600 mb-6">
-                  View a log of all uploaded CSVs, anomaly thresholds, and upload dates.
-                </p>
-                <Link href="/upload-log">
-                  <Button className="w-full h-12 bg-black hover:bg-black/80 [font-family:'Montserrat',Helvetica] font-medium text-base border-2 border-black">
-                    View Upload Log
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+
           </div>
         </div>
       </main>

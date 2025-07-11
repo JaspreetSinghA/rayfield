@@ -2,14 +2,21 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import IsolationForest
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, r2_score
 import os
 from dotenv import load_dotenv
 
 # Feature engineering: add rolling average and percent change
-def add_features(df, target_col='Unit CO2 emissions (non-biogenic) '):
+def add_features(df):
     df = df.copy()
+    df.columns = df.columns.str.strip()
+    # Find the correct CO2 column name
+    target_col = next((c for c in df.columns if c.startswith('Unit CO2 emissions (non-biogenic)')), None)
+    if target_col is None:
+        raise KeyError("Could not find CO2 emissions column in input data.")
+    # Add rolling 7-day mean
     df['rolling_7d'] = df[target_col].rolling(window=7, min_periods=1).mean()
+    # Add percent change
     df['pct_change'] = df[target_col].pct_change().fillna(0)
     return df
 
@@ -62,3 +69,26 @@ def gpt_summary(prompt_text):
 
 def generate_mock_summary_text(prompt_text):
     return f"[MOCK SUMMARY] {prompt_text}" 
+
+def regression_metrics(model, X, y):
+    """Calculate regression metrics."""
+    y_pred = model.predict(X)
+    from sklearn.metrics import mean_squared_error, r2_score
+    mse = mean_squared_error(y, y_pred)
+    rmse = mse ** 0.5  # Calculate RMSE manually
+    r2 = r2_score(y, y_pred)
+    return {
+        'mse': mse,
+        'rmse': rmse,
+        'r2': r2
+    }
+
+
+def explain_anomaly(row):
+    """Generate a short explanation for an anomaly row."""
+    actual = row.get('Unit CO2 emissions (non-biogenic)', None)
+    predicted = row.get('Predicted CO2', None)
+    deviation = row.get('Deviation (%)', None)
+    if actual is not None and predicted is not None and deviation is not None:
+        return f"Actual ({actual:.2f}) is {deviation:.1f}% {'above' if deviation > 0 else 'below'} predicted ({predicted:.2f})."
+    return "Deviation from expected value detected." 

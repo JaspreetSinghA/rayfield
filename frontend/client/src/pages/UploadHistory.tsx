@@ -119,6 +119,9 @@ export default function UploadHistory() {
                           <Link href={`/review?submission_id=${s.id}`}>
                             <Button size="sm" variant="outline">View Results</Button>
                           </Link>
+                          <Link href={`/flagged-anomalies?submission_id=${s.id}`}>
+                            <Button size="sm" variant="outline" className="ml-2">View Anomalies</Button>
+                          </Link>
                         </td>
                       </tr>
                     ))}

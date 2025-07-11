@@ -6,8 +6,20 @@ import { Link } from "wouter";
 import { AlertTriangle, Eye, X, RefreshCw, Download, Filter } from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { Input } from "@/components/ui/input";
+import { useLocation } from "wouter";
 
-// Add new interface for real anomaly data
+// Add new types for thresholds and feedback
+interface Thresholds {
+  anomaly: string | number;
+  flagged: string | number;
+}
+
+interface AnomalyFeedback {
+  status: string; // e.g., 'false_positive', 'resolved', etc.
+  notes?: string;
+}
+
+// Extend RealAnomaly to include explanation
 interface RealAnomaly {
   id: number;
   facility: string;
@@ -15,7 +27,8 @@ interface RealAnomaly {
   emission_value: number;
   severity: string;
   timestamp: string;
-  [key: string]: any; // Allow dynamic fields for extra CSV columns
+  explanation?: string;
+  [key: string]: any;
 }
 
 export const FlaggedAnomalies = (): JSX.Element => {
@@ -29,6 +42,11 @@ export const FlaggedAnomalies = (): JSX.Element => {
   const [date, setDate] = useState<string>("");
   const [currentCsv, setCurrentCsv] = useState<string | null>(null);
   const anomalyRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const [thresholds, setThresholds] = useState<Thresholds>({ anomaly: "auto", flagged: 15 });
+  const [metrics, setMetrics] = useState<{ r2?: number; rmse?: number }>({});
+  const [anomalyWarning, setAnomalyWarning] = useState<string>("");
+  const [feedbacks, setFeedbacks] = useState<Record<number, AnomalyFeedback>>({});
+  const [location] = useLocation();
 
   // Compute counts for summary cards
   const highCount = anomalies.filter(a => a.severity === "High").length;
@@ -55,22 +73,126 @@ export const FlaggedAnomalies = (): JSX.Element => {
     }
   }, [anomalies]);
 
-  // Fetch from improved backend endpoint
+  // Get submission_id from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const submissionId = urlParams.get('submission_id');
+
+  // Fetch thresholds for this submission
+  useEffect(() => {
+    let id = submissionId;
+    if (!id) {
+      apiClient.request('/api/submissions/history').then((res) => {
+        const subs = res as { id: number }[];
+        if (Array.isArray(subs) && subs.length > 0) {
+          id = String(subs[0].id);
+        }
+        if (id) {
+          apiClient.request(`/api/thresholds/${id}`)
+            .then((res) => setThresholds(res as Thresholds))
+            .catch(() => {});
+        }
+      });
+    } else {
+      apiClient.request(`/api/thresholds/${id}`)
+        .then((res) => setThresholds(res as Thresholds))
+        .catch(() => {});
+    }
+  }, [submissionId]);
+
+  // Fetch anomalies and metrics
   const fetchAnomalies = async () => {
     setLoading(true);
     setError(null);
+    let id = submissionId;
+    if (!id) {
+      const res = await apiClient.request('/api/submissions/history');
+      const subs = res as { id: number }[];
+      if (Array.isArray(subs) && subs.length > 0) {
+        id = String(subs[0].id);
+      }
+    }
     try {
-      // Use a default submission_id for now (could be dynamic)
+      if (!id) throw new Error('No submission_id found');
       const res = await apiClient.request<any>(
-        '/api/submissions/1/results' // TODO: Replace 1 with actual submission_id if needed
+        `/api/submissions/${id}/results`
       );
       setAnomalies(res.anomalies_data || []);
+      if (res.metrics) setMetrics(res.metrics);
+      if (res.anomaly_warning) setAnomalyWarning(res.anomaly_warning);
     } catch (err) {
       setError('Failed to fetch anomalies');
     } finally {
       setLoading(false);
     }
   };
+
+  // Handle threshold changes
+  const handleThresholdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setThresholds(prev => ({ ...prev, [name]: value }));
+  };
+  const saveThresholds = async () => {
+    let id = submissionId;
+    if (!id) {
+      const res = await apiClient.request('/api/submissions/history');
+      const subs = res as { id: number }[];
+      if (Array.isArray(subs) && subs.length > 0) {
+        id = String(subs[0].id);
+      }
+    }
+    if (!id) return;
+    await apiClient.request(`/api/thresholds/${id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(thresholds)
+    });
+    fetchAnomalies(); // re-fetch with new thresholds
+  };
+
+  // Handle feedback
+  const submitFeedback = async (anomalyId: number, status: string, notes?: string) => {
+    let id = submissionId;
+    if (!id) {
+      const res = await apiClient.request('/api/submissions/history');
+      const subs = res as { id: number }[];
+      if (Array.isArray(subs) && subs.length > 0) {
+        id = String(subs[0].id);
+      }
+    }
+    if (!id) return;
+    await apiClient.request(`/api/anomaly-feedback/${id}/${anomalyId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, notes })
+    });
+    setFeedbacks(prev => ({ ...prev, [anomalyId]: { status, notes } }));
+  };
+
+  // Fetch feedbacks for all anomalies
+  useEffect(() => {
+    let id = submissionId;
+    if (!id) {
+      apiClient.request('/api/submissions/history').then((res) => {
+        const subs = res as { id: number }[];
+        if (Array.isArray(subs) && subs.length > 0) {
+          id = String(subs[0].id);
+        }
+        if (id) {
+          anomalies.forEach((anomaly: RealAnomaly) => {
+            apiClient.request(`/api/anomaly-feedback/${id}/${anomaly.id}`)
+              .then((fb) => setFeedbacks(prev => ({ ...prev, [anomaly.id]: fb as AnomalyFeedback })))
+              .catch(() => {});
+          });
+        }
+      });
+    } else {
+      anomalies.forEach((anomaly: RealAnomaly) => {
+        apiClient.request(`/api/anomaly-feedback/${id}/${anomaly.id}`)
+          .then((fb) => setFeedbacks(prev => ({ ...prev, [anomaly.id]: fb as AnomalyFeedback })))
+          .catch(() => {});
+      });
+    }
+  }, [anomalies, submissionId]);
 
   const updateAnomalyStatus = async (anomalyId: number, newStatus: string) => {
     try {
@@ -182,6 +304,56 @@ export const FlaggedAnomalies = (): JSX.Element => {
             <b>Note:</b> You are viewing anomalies for the most recently uploaded file: <span className="font-mono">{currentCsv}</span>. Previous sessions are not shown here.
           </div>
         )}
+        {/* Threshold configuration UI */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Threshold Configuration</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col md:flex-row md:space-x-4">
+              <div>
+                <label className="block font-medium mb-1">Anomaly Threshold (contamination):</label>
+                <input
+                  type="text"
+                  name="anomaly"
+                  value={thresholds.anomaly}
+                  onChange={handleThresholdChange}
+                  className="border rounded px-2 py-1 w-32"
+                  placeholder="auto"
+                />
+              </div>
+              <div>
+                <label className="block font-medium mb-1">Flagged Threshold (% deviation):</label>
+                <input
+                  type="text"
+                  name="flagged"
+                  value={thresholds.flagged}
+                  onChange={handleThresholdChange}
+                  className="border rounded px-2 py-1 w-32"
+                  placeholder="15"
+                />
+              </div>
+              <div className="flex items-end">
+                <Button onClick={saveThresholds} className="ml-2">Save</Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Show backend warning if present */}
+        {anomalyWarning && (
+          <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-400 text-red-800 rounded">
+            <b>Warning:</b> {anomalyWarning}
+          </div>
+        )}
+
+        {/* Regression metrics */}
+        {metrics.r2 !== undefined && metrics.rmse !== undefined && (
+          <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded">
+            <b>Regression Model Metrics:</b> R² = {metrics.r2.toFixed(3)}, RMSE = {metrics.rmse.toFixed(2)}
+          </div>
+        )}
+
         <div>
           <div className="mb-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

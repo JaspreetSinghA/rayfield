@@ -18,6 +18,7 @@ import { Submission } from "@/pages/Submission";
 import GetHelp from "@/pages/GetHelp";
 import UploadHistory from "@/pages/UploadHistory";
 import UploadLog from "@/pages/UploadLog";
+import Home from "@/pages/Home";
 
 function RequireAuth({ children }: { children: JSX.Element }) {
   if (!localStorage.getItem("is_authenticated")) {
@@ -30,8 +31,9 @@ function RequireAuth({ children }: { children: JSX.Element }) {
 function Router() {
   return (
     <Switch>
+      {/* Public homepage */}
+      <Route path="/" component={Home} />
       {/* Authentication pages */}
-      <Route path="/" component={SignIn} />
       <Route path="/signup" component={SignUp} />
       <Route path="/signin" component={SignIn} />
       

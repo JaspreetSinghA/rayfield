@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,7 @@ export const FlaggedAnomalies = (): JSX.Element => {
   const [search, setSearch] = useState<string>("");
   const [date, setDate] = useState<string>("");
   const [currentCsv, setCurrentCsv] = useState<string | null>(null);
+  const anomalyRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   // Compute counts for summary cards
   const highCount = anomalies.filter(a => a.severity === "High").length;
@@ -40,6 +41,19 @@ export const FlaggedAnomalies = (): JSX.Element => {
     const lastCsv = localStorage.getItem("last_uploaded_csv");
     if (lastCsv) setCurrentCsv(lastCsv);
   }, []);
+
+  useEffect(() => {
+    // Scroll to anomaly if anomaly_id is in URL
+    const params = new URLSearchParams(window.location.search);
+    const anomalyId = params.get("anomaly_id");
+    if (anomalyId && anomalyRefs.current[anomalyId]) {
+      anomalyRefs.current[anomalyId]?.scrollIntoView({ behavior: "smooth", block: "center" });
+      anomalyRefs.current[anomalyId]?.classList.add("ring-4", "ring-blue-400");
+      setTimeout(() => {
+        anomalyRefs.current[anomalyId]?.classList.remove("ring-4", "ring-blue-400");
+      }, 3000);
+    }
+  }, [anomalies]);
 
   // Fetch from improved backend endpoint
   const fetchAnomalies = async () => {
@@ -225,7 +239,11 @@ export const FlaggedAnomalies = (): JSX.Element => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredAnomalies.map((anomaly) => (
-                <Card key={anomaly.id} className="hover:shadow-lg transition-shadow">
+                <Card
+                  key={anomaly.id}
+                  ref={el => { anomalyRefs.current[anomaly.id] = el; }}
+                  className="hover:shadow-lg transition-shadow"
+                >
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="[font-family:'Montserrat',Helvetica] font-medium text-lg">

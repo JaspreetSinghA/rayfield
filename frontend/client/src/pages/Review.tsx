@@ -163,6 +163,17 @@ export const Review = (): JSX.Element => {
     }
   };
 
+  // Handler for anomaly point click
+  const handleAnomalyClick = (anomalyIndex: number) => {
+    // Find the anomaly by index in chartData
+    if (!chartData) return;
+    const year = chartData.labels[anomalyIndex];
+    const anomaly = anomalies.find(a => a.year === year);
+    if (anomaly) {
+      setLocation(`/flagged-anomalies?anomaly_id=${anomaly.id}`);
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-gray-50 min-h-screen flex items-center justify-center">
@@ -336,56 +347,13 @@ export const Review = (): JSX.Element => {
             <Card>
               <CardContent>
                 {chartData && (
-                  <div style={{ position: 'relative', height: 400 }}>
-                    <Line
-                      data={{
-                        labels: chartData.labels,
-                        datasets: [
-                          {
-                            label: 'CO2 Emissions',
-                            data: chartData.emissions,
-                            borderColor: '#2563eb',
-                            backgroundColor: 'rgba(37,99,235,0.1)',
-                            pointRadius: chartData.labels.map((_: string | number, i: number) => chartData.anomaly_indices.includes(i) ? 7 : 3),
-                            pointBackgroundColor: chartData.labels.map((_: string | number, i: number) => chartData.anomaly_indices.includes(i) ? 'red' : '#2563eb'),
-                            pointHoverRadius: 10,
-                          },
-                        ],
-                      }}
-                      options={{
-                        responsive: true,
-                        plugins: {
-                          legend: { display: false },
-                          tooltip: {
-                            enabled: true,
-                            callbacks: {
-                              label: function(context: any) {
-                                const idx = context.dataIndex;
-                                const isAnomaly = chartData.anomaly_indices.includes(idx);
-                                if (isAnomaly) {
-                                  const anomaly = anomalies.find(a => a.year === chartData.labels[idx]);
-                                  if (anomaly) {
-                                    return [
-                                      `Facility: ${anomaly.facility}`,
-                                      `Year: ${anomaly.year}`,
-                                      `Emissions: ${anomaly.emission_value}`,
-                                      `Severity: ${anomaly.severity}`,
-                                      `Deviation: ${anomaly["Deviation (%)"]}`
-                                    ];
-                                  }
-                                }
-                                return `Emissions: ${context.parsed.y}`;
-                              }
-                            }
-                          }
-                        },
-                        scales: {
-                          x: { title: { display: true, text: 'Year' } },
-                          y: { title: { display: true, text: 'CO2 Emissions (metric tons)' } }
-                        }
-                      }}
-                    />
-                  </div>
+                  <EnergyChart
+                    data={chartData}
+                    onAnomalyClick={handleAnomalyClick}
+                    title="Energy Emissions Over Time"
+                    height={400}
+                    anomalies={results.anomalies_data}
+                  />
                 )}
               </CardContent>
             </Card>

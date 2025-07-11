@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './card';
 
 interface ChartData {
-  labels: number[];
+  labels: (string | number)[];
   emissions: number[];
   anomaly_indices: number[];
 }
@@ -11,13 +11,25 @@ interface ChartProps {
   data: ChartData;
   title?: string;
   height?: number;
+  onAnomalyClick?: (anomalyIndex: number) => void;
+  anomalies?: Array<{
+    id: number;
+    facility: string;
+    year: string | number;
+    emission_value: number;
+    severity: string;
+    "Deviation (%)"?: number;
+  }>;
 }
 
 export const EnergyChart: React.FC<ChartProps> = ({ 
   data, 
   title = "Energy Emissions Over Time",
-  height = 300 
+  height = 300,
+  onAnomalyClick,
+  anomalies = []
 }) => {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   if (!data || !data.emissions || !Array.isArray(data.emissions) || data.emissions.length === 0) {
     return (
       <Card>
@@ -88,17 +100,56 @@ export const EnergyChart: React.FC<ChartProps> = ({
             />
 
             {/* Data points */}
-            {data.emissions.map((emission, index) => (
-              <circle
-                key={index}
-                cx={getXPosition(index)}
-                cy={getYPosition(emission)}
-                r="3"
-                fill={data.anomaly_indices.includes(index) ? "#ef4444" : "#3b82f6"}
-                stroke="white"
-                strokeWidth="1"
-              />
-            ))}
+            {data.emissions.map((emission, index) => {
+              const isAnomaly = data.anomaly_indices.includes(index);
+              const isHovered = hoveredIndex === index;
+              const anomaly = anomalies.find(a => String(a.year) === String(data.labels[index]));
+              return (
+                <g key={index}>
+                  <circle
+                    cx={getXPosition(index)}
+                    cy={getYPosition(emission)}
+                    r={isAnomaly ? (isHovered ? 7 : 5) : (isHovered ? 5 : 3)}
+                    fill={isAnomaly ? "#ef4444" : "#3b82f6"}
+                    stroke="white"
+                    strokeWidth="1"
+                    style={{ cursor: isAnomaly && onAnomalyClick ? 'pointer' : 'default', transition: 'r 0.15s' }}
+                    onClick={isAnomaly && onAnomalyClick ? () => onAnomalyClick(index) : undefined}
+                    onMouseEnter={() => setHoveredIndex(index)}
+                    onMouseLeave={() => setHoveredIndex(null)}
+                  />
+                  {/* Enhanced Tooltip */}
+                  {isHovered && (
+                    <foreignObject
+                      x={getXPosition(index) - 80}
+                      y={getYPosition(emission) - 80}
+                      width="160"
+                      height="60"
+                    >
+                      <div style={{ pointerEvents: 'none' }} className="bg-white border border-gray-300 rounded shadow-lg px-3 py-2 text-xs text-gray-800">
+                        <div className="font-semibold mb-1">
+                          {anomaly ? anomaly.facility : `Year ${String(data.labels[index])}`}
+                        </div>
+                        <div><b>Year:</b> {String(data.labels[index])}</div>
+                        <div><b>Emission:</b> {emission.toLocaleString(undefined, { maximumFractionDigits: 2 })} tons</div>
+                        {isAnomaly && anomaly && (
+                          <>
+                            <div><b>Severity:</b> <span className={`font-semibold ${
+                              anomaly.severity === 'High' ? 'text-red-600' : 
+                              anomaly.severity === 'Medium' ? 'text-yellow-600' : 'text-green-600'
+                            }`}>{anomaly.severity}</span></div>
+                            {anomaly["Deviation (%)"] && (
+                              <div><b>Deviation:</b> {anomaly["Deviation (%)"].toFixed(1)}%</div>
+                            )}
+                          </>
+                        )}
+                        {isAnomaly && <div className="text-red-600 font-semibold mt-1">⚠️ Anomaly Detected</div>}
+                      </div>
+                    </foreignObject>
+                  )}
+                </g>
+              );
+            })}
 
             {/* Anomaly indicators */}
             {data.anomaly_indices.map((index) => (
@@ -123,10 +174,36 @@ export const EnergyChart: React.FC<ChartProps> = ({
                 fontSize="12"
                 fill="#6b7280"
                 textAnchor="middle"
+                fontWeight="bold"
               >
-                {data.labels[index]}
+                {String(data.labels[index])}
               </text>
             ))}
+
+            {/* Y-axis label */}
+            <text
+              x="-30"
+              y={height / 2}
+              fontSize="14"
+              fill="#6b7280"
+              textAnchor="middle"
+              transform={`rotate(-90 -30,${height / 2})`}
+              fontWeight="bold"
+            >
+              CO₂ Emissions (metric tons)
+            </text>
+
+            {/* X-axis title */}
+            <text
+              x={400}
+              y={height - 2}
+              fontSize="14"
+              fill="#6b7280"
+              textAnchor="middle"
+              fontWeight="bold"
+            >
+              Year
+            </text>
 
             {/* Legend */}
             <g transform={`translate(30, ${height - 50})`}>

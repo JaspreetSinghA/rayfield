@@ -377,3 +377,5 @@ cache/
 tmp/
 temp/
 backend/__pycache__/ai_module.cpython-312.pyc
+
+!frontend/client/src/lib/
